@@ -446,13 +446,28 @@
                 <div class="settings-card">
                     <h3>Cài đặt Banner</h3>
                     <div class="banner-upload">
-                        <input type="file" id="banner-upload" accept="image/*">
-                        <button class="btn-secondary" onclick="document.getElementById('banner-upload').click()">
-                            <i class="fas fa-upload"></i> Chọn ảnh Banner
+                        <div class="form-group">
+                            <label>URL ảnh Banner</label>
+                            <input type="url" id="banner-url" placeholder="https://i.imgur.com/example.jpg" class="form-control">
+                            <small class="form-text">
+                                💡 Upload ảnh lên <a href="https://imgur.com" target="_blank">Imgur</a> hoặc GitHub, copy direct link vào đây
+                            </small>
+                        </div>
+                        <button class="btn-primary" onclick="updateBannerImage()">
+                            <i class="fas fa-save"></i> Cập nhật Banner
                         </button>
                         <div class="banner-preview" id="banner-preview">
-                            <!-- Current banner will be shown here -->
+                            <img src="https://via.placeholder.com/800x300/007bff/ffffff?text=Banner+Preview" alt="Banner Preview" style="max-width: 100%; border-radius: 8px;">
                         </div>
+                    </div>
+                    
+                    <div class="upload-guide">
+                        <h4>📖 Hướng dẫn upload ảnh:</h4>
+                        <ol>
+                            <li><strong>Imgur:</strong> Vào <a href="https://imgur.com" target="_blank">imgur.com</a> → Upload → Copy "Direct Link"</li>
+                            <li><strong>GitHub:</strong> Upload vào folder <code>images/</code> → Copy raw URL</li>
+                            <li><strong>Cloudinary:</strong> Upload → Copy image URL</li>
+                        </ol>
                     </div>
                 </div>
 
@@ -504,7 +519,35 @@
                 <div class="settings-card">
                     <h3>Cài đặt ảnh danh mục</h3>
                     <div class="category-images" id="category-images-list">
-                        <!-- Will be populated by JS -->
+                        <div class="category-image-item">
+                            <label>🏈 Bóng đá</label>
+                            <input type="url" id="football-image" placeholder="https://i.imgur.com/football.jpg" value="https://via.placeholder.com/200x200/28a745/ffffff?text=Football">
+                            <button onclick="updateCategoryImage('football')" class="btn-sm btn-primary">Cập nhật</button>
+                        </div>
+                        
+                        <div class="category-image-item">
+                            <label>🏀 Bóng rổ</label>
+                            <input type="url" id="basketball-image" placeholder="https://i.imgur.com/basketball.jpg" value="https://via.placeholder.com/200x200/fd7e14/ffffff?text=Basketball">
+                            <button onclick="updateCategoryImage('basketball')" class="btn-sm btn-primary">Cập nhật</button>
+                        </div>
+                        
+                        <div class="category-image-item">
+                            <label>🎾 Tennis</label>
+                            <input type="url" id="tennis-image" placeholder="https://i.imgur.com/tennis.jpg" value="https://via.placeholder.com/200x200/e74c3c/ffffff?text=Tennis">
+                            <button onclick="updateCategoryImage('tennis')" class="btn-sm btn-primary">Cập nhật</button>
+                        </div>
+                        
+                        <div class="category-image-item">
+                            <label>🏃 Chạy bộ</label>
+                            <input type="url" id="running-image" placeholder="https://i.imgur.com/running.jpg" value="https://via.placeholder.com/200x200/9b59b6/ffffff?text=Running">
+                            <button onclick="updateCategoryImage('running')" class="btn-sm btn-primary">Cập nhật</button>
+                        </div>
+                        
+                        <div class="category-image-item">
+                            <label>💪 Gym & Fitness</label>
+                            <input type="url" id="gym-image" placeholder="https://i.imgur.com/gym.jpg" value="https://via.placeholder.com/200x200/17a2b8/ffffff?text=Gym">
+                            <button onclick="updateCategoryImage('gym')" class="btn-sm btn-primary">Cập nhật</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -550,9 +593,15 @@
                         <label>Số lượng</label>
                         <input type="number" name="stock" min="0" value="0">
                     </div>
-                    <div class="form-group">
-                        <label>Hình ảnh sản phẩm</label>
-                        <input type="file" name="images" multiple accept="image/*">
+                    <div class="form-group full-width">
+                        <label>Hình ảnh sản phẩm (URL)</label>
+                        <input type="url" name="imageUrl" placeholder="https://i.imgur.com/product-image.jpg" class="form-control">
+                        <small class="form-text">
+                            💡 Upload ảnh lên <a href="https://imgur.com" target="_blank">Imgur</a>, copy direct link vào đây
+                        </small>
+                        <div class="image-preview" id="product-image-preview" style="margin-top: 10px;">
+                            <!-- Preview will show here -->
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Trạng thái</label>
