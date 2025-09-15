@@ -47,6 +47,21 @@ function setupEventListeners() {
     document.getElementById('product-search')?.addEventListener('keyup', debounce(searchProducts, 300));
     document.getElementById('order-search')?.addEventListener('keyup', debounce(searchOrders, 300));
     document.getElementById('user-search')?.addEventListener('keyup', debounce(searchUsers, 300));
+    
+    // Image URL inputs for live preview
+    document.querySelector('input[name="imageUrl"]')?.addEventListener('input', previewProductImage);
+    document.getElementById('banner-url')?.addEventListener('input', function() {
+        const url = this.value;
+        if (url) {
+            const preview = document.getElementById('banner-preview');
+            try {
+                new URL(url);
+                preview.innerHTML = `<img src="${url}" alt="Banner Preview" style="max-width: 100%; border-radius: 8px;">`;
+            } catch {
+                preview.innerHTML = '<p style="color: red;">URL không hợp lệ</p>';
+            }
+        }
+    });
 }
 
 // Section Management
@@ -355,6 +370,9 @@ function handleAddProduct(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     
+    // Get image URL from form
+    const imageUrl = formData.get('imageUrl') || 'https://via.placeholder.com/300x300/007bff/ffffff?text=New+Product';
+    
     // Mock product creation
     const newProduct = {
         id: products.length + 1,
@@ -366,15 +384,16 @@ function handleAddProduct(e) {
         stock: parseInt(formData.get('stock')),
         featured: formData.get('featured') === 'on',
         onSale: formData.get('onSale') === 'on',
-        images: ['https://via.placeholder.com/300x300/007bff/ffffff?text=New+Product'],
+        images: [imageUrl],
         rating: 0,
-        reviews: 0
+        reviews: 0,
+        status: formData.get('status') || 'active'
     };
     
     products.push(newProduct);
     loadProducts();
     closeAdminModal('add-product-modal');
-    showAdminMessage('Sản phẩm đã được thêm thành công', 'success');
+    showMessage('Sản phẩm đã được thêm thành công!', 'success');
 }
 
 function viewProduct(productId) {
@@ -989,6 +1008,78 @@ function showProfile() {
     });
 }
 
+function updateBannerImage() {
+    const bannerUrl = document.getElementById('banner-url').value;
+    
+    if (!bannerUrl) {
+        showMessage('Vui lòng nhập URL ảnh banner!', 'error');
+        return;
+    }
+    
+    // Validate URL format
+    try {
+        new URL(bannerUrl);
+    } catch {
+        showMessage('URL không hợp lệ!', 'error');
+        return;
+    }
+    
+    // Update preview
+    const preview = document.getElementById('banner-preview');
+    preview.innerHTML = `<img src="${bannerUrl}" alt="Banner Preview" style="max-width: 100%; border-radius: 8px;">`;
+    
+    // Update banner in main website (in mock data)
+    if (typeof banners !== 'undefined') {
+        banners[0].image = bannerUrl;
+    }
+    
+    showMessage('Banner đã được cập nhật!', 'success');
+}
+
+function updateCategoryImage(category) {
+    const imageUrl = document.getElementById(category + '-image').value;
+    
+    if (!imageUrl) {
+        showMessage('Vui lòng nhập URL ảnh!', 'error');
+        return;
+    }
+    
+    // Validate URL format
+    try {
+        new URL(imageUrl);
+    } catch {
+        showMessage('URL không hợp lệ!', 'error');
+        return;
+    }
+    
+    // Update category image in mock data
+    const categoryNames = {
+        'football': 'Bóng đá',
+        'basketball': 'Bóng rổ', 
+        'tennis': 'Tennis',
+        'running': 'Chạy bộ',
+        'gym': 'Gym & Fitness'
+    };
+    
+    showMessage(`Ảnh danh mục ${categoryNames[category]} đã được cập nhật!`, 'success');
+}
+
+function previewProductImage() {
+    const imageUrl = document.querySelector('input[name="imageUrl"]').value;
+    const preview = document.getElementById('product-image-preview');
+    
+    if (imageUrl) {
+        try {
+            new URL(imageUrl);
+            preview.innerHTML = `<img src="${imageUrl}" alt="Product Preview" style="max-width: 200px; border-radius: 8px;">`;
+        } catch {
+            preview.innerHTML = '<p style="color: red;">URL không hợp lệ</p>';
+        }
+    } else {
+        preview.innerHTML = '';
+    }
+}
+
 function adminLogout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
         // Clear any admin session data
@@ -1089,4 +1180,7 @@ window.selectAllUsers = selectAllUsers;
 window.changePage = changePage;
 window.closeAdminModal = closeAdminModal;
 window.showProfile = showProfile;
+window.updateBannerImage = updateBannerImage;
+window.updateCategoryImage = updateCategoryImage;
+window.previewProductImage = previewProductImage;
 window.adminLogout = adminLogout;
