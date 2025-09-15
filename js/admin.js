@@ -534,7 +534,7 @@ function viewOrderDetail(orderId) {
                 <select id="order-status-update">
                     <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Chờ xử lý</option>
                     <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Xác nhận</option>
-                    <option value="shipping" ${order.status === 'shipping' ? 'selected' : '}}Đang giao</option>
+                    <option value="shipping" ${order.status === 'shipping' ? 'selected' : ''}>Đang giao</option>
                     <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Đã giao</option>
                     <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Đã hủy</option>
                 </select>
