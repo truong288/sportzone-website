@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportZone Admin - Quản trị hệ thống</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="admin-body">
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="admin-header-content">
+            <div class="admin-logo">
+                <h2>SportZone Admin</h2>
+            </div>
+            
+            <div class="admin-header-right">
+                <div class="admin-user">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="admin-name">Super Admin</span>
+                    <div class="admin-dropdown">
+                        <a href="#" onclick="showProfile()"><i class="fas fa-user"></i> Hồ sơ</a>
+                        <a href="#" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                    </div>
+                </div>
+                
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar" id="admin-sidebar">
+        <nav class="admin-nav">
+            <ul>
+                <li class="nav-item active">
+                    <a href="#" onclick="showSection('dashboard')" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Tổng quan</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" onclick="showSection('products')" class="nav-link">
+                        <i class="fas fa-box"></i>
+                        <span>Quản lý sản phẩm</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" onclick="showSection('orders')" class="nav-link">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Quản lý đơn hàng</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" onclick="showSection('users')" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        <span>Quản lý người dùng</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" onclick="showSection('admins')" class="nav-link">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Quản lý admin</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" onclick="showSection('settings')" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Cài đặt</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="admin-section active">
+            <div class="section-header">
+                <h1>Tổng quan</h1>
+                <div class="time-filter">
+                    <select id="time-range" onchange="updateDashboard()">
+                        <option value="7">7 ngày qua</option>
+                        <option value="30" selected>30 ngày qua</option>
+                        <option value="90">90 ngày qua</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card revenue">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-revenue">125.000.000đ</h3>
+                        <p>Tổng doanh thu</p>
+                        <span class="stat-change positive" id="revenue-change">+15.5%</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card orders">
+                    <div class="stat-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-orders">156</h3>
+                        <p>Đơn hàng thành công</p>
+                        <span class="stat-change positive" id="orders-change">+8.2%</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card customers">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-customers">89</h3>
+                        <p>Tổng khách hàng</p>
+                        <span class="stat-change positive" id="customers-change">+12.1%</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card products">
+                    <div class="stat-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-products">245</h3>
+                        <p>Sản phẩm đang bán</p>
+                        <span class="stat-change neutral">0%</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card shipping">
+                    <div class="stat-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-shipping">4.680.000đ</h3>
+                        <p>Tổng phí ship</p>
+                        <span class="stat-change positive">+5.2%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Doanh thu theo ngày</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenue-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Đơn hàng theo ngày</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="orders-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Stats -->
+            <div class="additional-stats">
+                <div class="stat-card-wide">
+                    <h3>Sản phẩm bán chạy</h3>
+                    <div class="top-products" id="top-products-list">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+                
+                <div class="stat-card-wide">
+                    <h3>Phân bố danh mục</h3>
+                    <div class="chart-container">
+                        <canvas id="category-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="order-status-grid">
+                    <div class="status-card delivered">
+                        <h4>42</h4>
+                        <p>Đã giao</p>
+                    </div>
+                    <div class="status-card shipping">
+                        <h4>18</h4>
+                        <p>Đang giao</p>
+                    </div>
+                    <div class="status-card pending">
+                        <h4>8</h4>
+                        <p>Chờ xử lý</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products-section" class="admin-section">
+            <div class="section-header">
+                <h1>Quản lý sản phẩm</h1>
+                <button class="btn-primary" onclick="showAddProductModal()">
+                    <i class="fas fa-plus"></i> Thêm sản phẩm mới
+                </button>
+            </div>
+
+            <!-- Product Filters -->
+            <div class="filters-bar">
+                <div class="search-group">
+                    <input type="text" id="product-search" placeholder="Tìm kiếm sản phẩm...">
+                    <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <select id="category-filter" onchange="filterProducts()">
+                    <option value="">Tất cả danh mục</option>
+                    <option value="football">Bóng đá</option>
+                    <option value="basketball">Bóng rổ</option>
+                    <option value="tennis">Tennis</option>
+                    <option value="running">Chạy bộ</option>
+                    <option value="gym">Gym & Fitness</option>
+                </select>
+                
+                <select id="status-filter" onchange="filterProducts()">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Ngừng bán</option>
+                    <option value="out_of_stock">Hết hàng</option>
+                </select>
+                
+                <button class="btn-secondary" onclick="clearProductFilters()">
+                    <i class="fas fa-filter"></i> Xóa bộ lọc
+                </button>
+            </div>
+
+            <!-- Products Table -->
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="selectAllProducts(this)"></th>
+                            <th>Hình ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Giá bán</th>
+                            <th>Số lượng</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <!-- Will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="products-pagination">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders-section" class="admin-section">
+            <div class="section-header">
+                <h1>Quản lý đơn hàng</h1>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="exportOrders()">
+                        <i class="fas fa-download"></i> Xuất Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Order Filters -->
+            <div class="filters-bar">
+                <div class="search-group">
+                    <input type="text" id="order-search" placeholder="Tìm kiếm đơn hàng...">
+                    <button onclick="searchOrders()"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <select id="order-status-filter" onchange="filterOrders()">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="pending">Chờ xử lý</option>
+                    <option value="confirmed">Xác nhận</option>
+                    <option value="shipping">Đang giao</option>
+                    <option value="delivered">Đã giao</option>
+                    <option value="cancelled">Đã hủy</option>
+                </select>
+                
+                <button class="btn-secondary" onclick="clearOrderFilters()">
+                    <i class="fas fa-filter"></i> Xóa bộ lọc
+                </button>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="selectAllOrders(this)"></th>
+                            <th>Mã đơn hàng</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày đặt</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <!-- Will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="orders-pagination">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Users Section -->
+        <section id="users-section" class="admin-section">
+            <div class="section-header">
+                <h1>Quản lý người dùng</h1>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="exportUsers()">
+                        <i class="fas fa-download"></i> Xuất Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Filters -->
+            <div class="filters-bar">
+                <div class="search-group">
+                    <input type="text" id="user-search" placeholder="Tìm kiếm người dùng...">
+                    <button onclick="searchUsers()"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <select id="user-status-filter" onchange="filterUsers()">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Ngừng hoạt động</option>
+                </select>
+                
+                <button class="btn-secondary" onclick="clearUserFilters()">
+                    <i class="fas fa-filter"></i> Xóa bộ lọc
+                </button>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="selectAllUsers(this)"></th>
+                            <th>Người dùng</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Ngày đăng ký</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="users-pagination">
+                <!-- Will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- Admins Section -->
+        <section id="admins-section" class="admin-section">
+            <div class="section-header">
+                <h1>Quản lý tài khoản admin</h1>
+                <button class="btn-primary" onclick="showAddAdminModal()">
+                    <i class="fas fa-plus"></i> Thêm admin mới
+                </button>
+            </div>
+
+            <!-- Admins Table -->
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Họ và tên</th>
+                            <th>Vai trò</th>
+                            <th>Ngày tạo</th>
+                            <th>Lần đăng nhập cuối</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admins-table-body">
+                        <!-- Will be populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings-section" class="admin-section">
+            <div class="section-header">
+                <h1>Cài đặt hệ thống</h1>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Shipping Settings -->
+                <div class="settings-card">
+                    <h3>Cài đặt phí vận chuyển</h3>
+                    <div class="shipping-fees" id="shipping-fees-list">
+                        <!-- Will be populated by JS -->
+                    </div>
+                    <button class="btn-primary" onclick="showAddShippingFeeModal()">
+                        <i class="fas fa-plus"></i> Thêm phí vận chuyển
+                    </button>
+                </div>
+
+                <!-- General Settings -->
+                <div class="settings-card">
+                    <h3>Cài đặt chung</h3>
+                    <form id="general-settings-form">
+                        <div class="form-group">
+                            <label>Ngưỡng miễn phí vận chuyển</label>
+                            <input type="number" id="free-shipping-threshold" value="500000">
+                            <span>VNĐ</span>
+                        </div>
+                        <button type="submit" class="btn-primary">Lưu cài đặt</button>
+                    </form>
+                </div>
+
+                <!-- Banner Settings -->
+                <div class="settings-card">
+                    <h3>Cài đặt Banner</h3>
+                    <div class="banner-upload">
+                        <input type="file" id="banner-upload" accept="image/*">
+                        <button class="btn-secondary" onclick="document.getElementById('banner-upload').click()">
+                            <i class="fas fa-upload"></i> Chọn ảnh Banner
+                        </button>
+                        <div class="banner-preview" id="banner-preview">
+                            <!-- Current banner will be shown here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bank Info Settings -->
+                <div class="settings-card">
+                    <h3>Thông tin ngân hàng</h3>
+                    <form id="bank-info-form">
+                        <div class="form-group">
+                            <label>Tên ngân hàng</label>
+                            <input type="text" id="bank-name" value="Vietcombank">
+                        </div>
+                        <div class="form-group">
+                            <label>Số tài khoản</label>
+                            <input type="text" id="account-number" value="1234567890">
+                        </div>
+                        <div class="form-group">
+                            <label>Tên chủ tài khoản</label>
+                            <input type="text" id="account-name" value="SPORT ZONE CO LTD">
+                        </div>
+                        <div class="form-group">
+                            <label>Chi nhánh</label>
+                            <input type="text" id="bank-branch" value="Chi nhánh TP.HCM">
+                        </div>
+                        <button type="submit" class="btn-primary">Lưu thông tin</button>
+                    </form>
+                </div>
+
+                <!-- Support Info Settings -->
+                <div class="settings-card">
+                    <h3>Thông tin hỗ trợ 24/7</h3>
+                    <form id="support-info-form">
+                        <div class="form-group">
+                            <label>Hotline</label>
+                            <input type="text" id="support-hotline" value="1900-1234">
+                        </div>
+                        <div class="form-group">
+                            <label>Email hỗ trợ</label>
+                            <input type="email" id="support-email" value="support@sportzone.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Giờ làm việc</label>
+                            <input type="text" id="working-hours" value="8:00 - 22:00 (Thứ 2 - Chủ nhật)">
+                        </div>
+                        <button type="submit" class="btn-primary">Lưu thông tin</button>
+                    </form>
+                </div>
+
+                <!-- Category Images -->
+                <div class="settings-card">
+                    <h3>Cài đặt ảnh danh mục</h3>
+                    <div class="category-images" id="category-images-list">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add Product Modal -->
+    <div id="add-product-modal" class="admin-modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeAdminModal('add-product-modal')">&times;</span>
+            <h2>Thêm sản phẩm mới</h2>
+            <form id="add-product-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Tên sản phẩm *</label>
+                        <input type="text" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Danh mục *</label>
+                        <select name="category" required>
+                            <option value="">Chọn danh mục</option>
+                            <option value="football">Bóng đá</option>
+                            <option value="basketball">Bóng rổ</option>
+                            <option value="tennis">Tennis</option>
+                            <option value="running">Chạy bộ</option>
+                            <option value="gym">Gym & Fitness</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Mô tả</label>
+                        <textarea name="description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Giá gốc</label>
+                        <input type="number" name="originalPrice" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Giá khuyến mãi</label>
+                        <input type="number" name="salePrice" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Số lượng</label>
+                        <input type="number" name="stock" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Hình ảnh sản phẩm</label>
+                        <input type="file" name="images" multiple accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <select name="status">
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Ngừng bán</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="featured"> Sản phẩm nổi bật
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="onSale"> Sản phẩm sale
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="comingSoon"> Hàng sắp về
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAdminModal('add-product-modal')">Hủy</button>
+                    <button type="submit" class="btn-primary">Thêm sản phẩm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="admin-modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeAdminModal('order-detail-modal')">&times;</span>
+            <h2>Chi tiết đơn hàng</h2>
+            <div id="order-detail-content">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Admin Modal -->
+    <div id="add-admin-modal" class="admin-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdminModal('add-admin-modal')">&times;</span>
+            <h2>Thêm admin mới</h2>
+            <form id="add-admin-form">
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Họ và tên *</label>
+                    <input type="text" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu *</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label>Vai trò *</label>
+                    <select name="role" required>
+                        <option value="">Chọn vai trò</option>
+                        <option value="admin">Admin</option>
+                        <option value="staff">Nhân viên</option>
+                        <option value="super_admin">Super Admin</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAdminModal('add-admin-modal')">Hủy</button>
+                    <button type="submit" class="btn-primary">Thêm admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
