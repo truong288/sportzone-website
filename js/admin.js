@@ -935,8 +935,64 @@ function showAdminMessage(message, type = 'info') {
     }, 3000);
 }
 
+function showProfile() {
+    // Create and show profile modal
+    const modalHtml = `
+        <div id="profile-modal" class="admin-modal" style="display: block;">
+            <div class="modal-content">
+                <span class="close" onclick="closeAdminModal('profile-modal')">&times;</span>
+                <h2>Hồ sơ Admin</h2>
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label>Họ và tên</label>
+                        <input type="text" value="${adminState.currentUser.name}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" value="admin@sportzone.com" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Vai trò</label>
+                        <input type="text" value="${getRoleText(adminState.currentUser.role)}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu mới (để trống nếu không đổi)</label>
+                        <input type="password" placeholder="Nhập mật khẩu mới">
+                    </div>
+                    <div class="form-group">
+                        <label>Xác nhận mật khẩu</label>
+                        <input type="password" placeholder="Xác nhận mật khẩu mới">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Cập nhật</button>
+                        <button type="button" class="btn-secondary" onclick="closeAdminModal('profile-modal')">Hủy</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('profile-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Setup form handler
+    document.getElementById('profile-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        showMessage('Hồ sơ đã được cập nhật!', 'success');
+        closeAdminModal('profile-modal');
+    });
+}
+
 function adminLogout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+        // Clear any admin session data
+        localStorage.removeItem('adminSession');
         window.location.href = 'index.html';
     }
 }
@@ -1032,4 +1088,5 @@ window.selectAllOrders = selectAllOrders;
 window.selectAllUsers = selectAllUsers;
 window.changePage = changePage;
 window.closeAdminModal = closeAdminModal;
+window.showProfile = showProfile;
 window.adminLogout = adminLogout;
