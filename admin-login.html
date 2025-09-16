@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Admin - SportZone</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+        }
+
+        .login-form {
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-right: 15px;
+        }
+
+        .logo span {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-login:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .demo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .demo-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .demo-accounts {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .demo-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .account-info {
+            flex: 1;
+        }
+
+        .account-email {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .account-password {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .btn-use {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-use:hover {
+            background: #218838;
+        }
+
+        .info-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .info-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .features {
+            list-style: none;
+            text-align: left;
+        }
+
+        .features li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .features li i {
+            margin-right: 15px;
+            font-size: 1.2rem;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success-message {
+            color: #155724;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .setup-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .setup-notice h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .setup-notice p {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .setup-notice a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .setup-notice a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+            }
+
+            .login-info {
+                order: -1;
+                padding: 40px 30px;
+            }
+
+            .login-form {
+                padding: 40px 30px;
+            }
+
+            .info-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="logo">
+                <i class="fas fa-dumbbell"></i>
+                <span>SportZone</span>
+            </div>
+            
+            <h1 class="login-title">Đăng nhập Admin</h1>
+            <p class="login-subtitle">Truy cập vào bảng điều khiển quản trị</p>
+
+            <!-- Setup Notice -->
+            <div class="setup-notice">
+                <h4><i class="fas fa-info-circle"></i> Lần đầu sử dụng?</h4>
+                <p>Nếu đây là lần đầu bạn truy cập, bạn cần:</p>
+                <p>1. <a href="#" onclick="showSetupGuide()">Setup database Supabase</a></p>
+                <p>2. <a href="setup-admin.html">Tạo tài khoản admin đầu tiên</a></p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    Đang đăng nhập...
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+            </form>
+
+            <!-- Demo Accounts Section -->
+            <div class="demo-section">
+                <div class="demo-title">
+                    <i class="fas fa-user-shield"></i> Tài khoản demo:
+                </div>
+                <div class="demo-accounts">
+                    <div class="demo-account">
+                        <div class="account-info">
+                            <div class="account-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7011141d191e3003001f02040a1f1e155e061e">[email&#160;protected]</a></div>
+                            <div class="account-password">Mật khẩu: admin123</div>
+                        </div>
+                        <button class="btn-use" onclick="useDemo('admin@sportzone.vn', 'admin123')">Sử dụng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-info">
+            <h2 class="info-title">SportZone Admin</h2>
+            <p class="info-subtitle">Quản lý website thể thao hiện đại</p>
+            
+            <ul class="features">
+                <li><i class="fas fa-chart-line"></i> Dashboard thống kê realtime</li>
+                <li><i class="fas fa-box"></i> Quản lý sản phẩm</li>
+                <li><i class="fas fa-shopping-cart"></i> Theo dõi đơn hàng</li>
+                <li><i class="fas fa-users"></i> Quản lý người dùng</li>
+                <li><i class="fas fa-cog"></i> Cài đặt hệ thống</li>
+                <li><i class="fas fa-shield-alt"></i> Bảo mật cao</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Setup Guide Modal -->
+    <div id="setupModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; margin: 5% auto; padding: 30px; border-radius: 10px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <h3>🚀 Hướng dẫn setup lần đầu</h3>
+            <div style="margin: 20px 0; line-height: 1.6;">
+                <h4>Bước 1: Setup Supabase Database</h4>
+                <p>1. Đăng nhập <a href="https://supabase.com/dashboard/project/nmrbzdwhzbkbpmizxqvo" target="_blank">Supabase Dashboard</a></p>
+                <p>2. Vào <strong>SQL Editor</strong></p>
+                <p>3. Copy nội dung file <code>database_setup.sql</code> và chạy</p>
+                
+                <h4>Bước 2: Cấu hình Authentication</h4>
+                <p>1. Vào <strong>Authentication > Settings</strong></p>
+                <p>2. Thiết lập <strong>Site URL</strong>: <code>https://truong288.github.io/sportzone-website/</code></p>
+                <p>3. Thêm <strong>Redirect URLs</strong>:</p>
+                <ul>
+                    <li><code>https://truong288.github.io/sportzone-website/</code></li>
+                    <li><code>https://truong288.github.io/sportzone-website/admin.html</code></li>
+                </ul>
+                
+                <h4>Bước 3: Tạo admin đầu tiên</h4>
+                <p>Sau khi setup database, sử dụng tài khoản demo:</p>
+                <p><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e58481888c8ba596958a97919f8a8b80cb938b">[email&#160;protected]</a></p>
+                <p><strong>Password:</strong> admin123</p>
+            </div>
+            <button onclick="closeSetupGuide()" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Đóng</button>
+        </div>
+    </div>
+
+    <!-- Load Supabase -->
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase.js"></script>
+
+    <script>
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Show loading
+            loginBtn.disabled = true;
+            loading.style.display = 'block';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            try {
+                // Check if Supabase is initialized
+                if (typeof supabase === 'undefined') {
+                    throw new Error('Database connection not available. Please setup Supabase first.');
+                }
+                
+                // Attempt login
+                const result = await loginUser(email, password);
+                
+                if (result.profile.role !== 'admin') {
+                    throw new Error('Chỉ tài khoản admin mới có thể truy cập trang này');
+                }
+                
+                // Success
+                successMessage.textContent = 'Đăng nhập thành công! Đang chuyển hướng...';
+                successMessage.style.display = 'block';
+                
+                // Redirect to admin panel
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorText = 'Đăng nhập thất bại';
+                
+                if (error.message.includes('Invalid login credentials')) {
+                    errorText = 'Email hoặc mật khẩu không đúng';
+                } else if (error.message.includes('Database connection not available')) {
+                    errorText = 'Chưa kết nối được database. Vui lòng setup Supabase trước.';
+                } else if (error.message.includes('admin')) {
+                    errorText = error.message;
+                } else {
+                    errorText = error.message || 'Lỗi hệ thống';
+                }
+                
+                errorMessage.textContent = errorText;
+                errorMessage.style.display = 'block';
+            } finally {
+                // Hide loading
+                loginBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Use demo account
+        function useDemo(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+        }
+        
+        // Setup guide modal
+        function showSetupGuide() {
+            document.getElementById('setupModal').style.display = 'block';
+        }
+        
+        function closeSetupGuide() {
+            document.getElementById('setupModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('setupModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSetupGuide();
+            }
+        });
+        
+        // Check if already logged in
+        window.addEventListener('load', async function() {
+            try {
+                if (typeof supabase !== 'undefined') {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { data: profile } = await supabase
+                            .from('users')
+                            .select('*')
+                            .eq('id', user.id)
+                            .single();
+                        
+                        if (profile && profile.role === 'admin') {
+                            window.location.href = 'admin.html';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Auto-login check failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>
