@@ -4,688 +4,389 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SportZone Admin - Quản trị hệ thống</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="css/admin.css" rel="stylesheet">
+    <style>
+        /* Additional styles for better UI */
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: none;
+            height: 100%;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+    </style>
 </head>
-<body class="admin-body">
-    <!-- Admin Header -->
-    <header class="admin-header">
-        <div class="admin-header-content">
-            <div class="admin-logo">
-                <h2>SportZone Admin</h2>
-            </div>
-            
-            <div class="admin-header-right">
-                <div class="admin-user">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="admin-name">Super Admin</span>
-                    <div class="admin-dropdown">
-                        <a href="#" onclick="showProfile()"><i class="fas fa-user"></i> Hồ sơ</a>
-                        <a href="#" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
-                    </div>
-                </div>
-                
-                <button class="sidebar-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-        </div>
-    </header>
+<body>
+    <!-- Auth Check (runs before page loads) -->
+    <script>
+        // Simple auth check before page renders
+        function checkAuth() {
+            const currentAdmin = localStorage.getItem('currentAdmin');
+            if (!currentAdmin) {
+                console.log('No admin session found, redirecting to login...');
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            try {
+                const admin = JSON.parse(currentAdmin);
+                console.log('✅ Admin authenticated:', admin.email);
+                return true;
+            } catch (error) {
+                console.error('Invalid session data, redirecting to login...');
+                localStorage.removeItem('currentAdmin');
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+        }
+        
+        // Check auth immediately
+        if (!checkAuth()) {
+            document.body.style.display = 'none'; // Hide page content
+        }
+    </script>
 
-    <!-- Admin Sidebar -->
-    <aside class="admin-sidebar" id="admin-sidebar">
-        <nav class="admin-nav">
-            <ul>
-                <li class="nav-item active">
-                    <a href="#" onclick="showSection('dashboard')" class="nav-link">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Tổng quan</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" onclick="showSection('products')" class="nav-link">
-                        <i class="fas fa-box"></i>
-                        <span>Quản lý sản phẩm</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" onclick="showSection('orders')" class="nav-link">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>Quản lý đơn hàng</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" onclick="showSection('users')" class="nav-link">
-                        <i class="fas fa-users"></i>
-                        <span>Quản lý người dùng</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" onclick="showSection('admins')" class="nav-link">
-                        <i class="fas fa-user-shield"></i>
-                        <span>Quản lý admin</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" onclick="showSection('settings')" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        <span>Cài đặt</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="admin-main">
-        <!-- Dashboard Section -->
-        <section id="dashboard-section" class="admin-section active">
-            <div class="section-header">
-                <h1>Tổng quan</h1>
-                <div class="time-filter">
-                    <select id="time-range" onchange="updateDashboard()">
-                        <option value="7">7 ngày qua</option>
-                        <option value="30" selected>30 ngày qua</option>
-                        <option value="90">90 ngày qua</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card revenue">
-                    <div class="stat-icon">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="total-revenue">125.000.000đ</h3>
-                        <p>Tổng doanh thu</p>
-                        <span class="stat-change positive" id="revenue-change">+15.5%</span>
-                    </div>
-                </div>
-                
-                <div class="stat-card orders">
-                    <div class="stat-icon">
-                        <i class="fas fa-shopping-bag"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="total-orders">156</h3>
-                        <p>Đơn hàng thành công</p>
-                        <span class="stat-change positive" id="orders-change">+8.2%</span>
-                    </div>
-                </div>
-                
-                <div class="stat-card customers">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="total-customers">89</h3>
-                        <p>Tổng khách hàng</p>
-                        <span class="stat-change positive" id="customers-change">+12.1%</span>
-                    </div>
-                </div>
-                
-                <div class="stat-card products">
-                    <div class="stat-icon">
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="total-products">245</h3>
-                        <p>Sản phẩm đang bán</p>
-                        <span class="stat-change neutral">0%</span>
-                    </div>
-                </div>
-                
-                <div class="stat-card shipping">
-                    <div class="stat-icon">
-                        <i class="fas fa-truck"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="total-shipping">4.680.000đ</h3>
-                        <p>Tổng phí ship</p>
-                        <span class="stat-change positive">+5.2%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Doanh thu theo ngày</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="revenue-chart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h3>Đơn hàng theo ngày</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="orders-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional Stats -->
-            <div class="additional-stats">
-                <div class="stat-card-wide">
-                    <h3>Sản phẩm bán chạy</h3>
-                    <div class="top-products" id="top-products-list">
-                        <!-- Will be populated by JS -->
-                    </div>
-                </div>
-                
-                <div class="stat-card-wide">
-                    <h3>Phân bố danh mục</h3>
-                    <div class="chart-container">
-                        <canvas id="category-chart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="order-status-grid">
-                    <div class="status-card delivered">
-                        <h4>42</h4>
-                        <p>Đã giao</p>
-                    </div>
-                    <div class="status-card shipping">
-                        <h4>18</h4>
-                        <p>Đang giao</p>
-                    </div>
-                    <div class="status-card pending">
-                        <h4>8</h4>
-                        <p>Chờ xử lý</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Products Section -->
-        <section id="products-section" class="admin-section">
-            <div class="section-header">
-                <h1>Quản lý sản phẩm</h1>
-                <button class="btn-primary" onclick="showAddProductModal()">
-                    <i class="fas fa-plus"></i> Thêm sản phẩm mới
-                </button>
-            </div>
-
-            <!-- Product Filters -->
-            <div class="filters-bar">
-                <div class="search-group">
-                    <input type="text" id="product-search" placeholder="Tìm kiếm sản phẩm...">
-                    <button onclick="searchProducts()"><i class="fas fa-search"></i></button>
-                </div>
-                
-                <select id="category-filter" onchange="filterProducts()">
-                    <option value="">Tất cả danh mục</option>
-                    <option value="football">Bóng đá</option>
-                    <option value="basketball">Bóng rổ</option>
-                    <option value="tennis">Tennis</option>
-                    <option value="running">Chạy bộ</option>
-                    <option value="gym">Gym & Fitness</option>
-                </select>
-                
-                <select id="status-filter" onchange="filterProducts()">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="active">Hoạt động</option>
-                    <option value="inactive">Ngừng bán</option>
-                    <option value="out_of_stock">Hết hàng</option>
-                </select>
-                
-                <button class="btn-secondary" onclick="clearProductFilters()">
-                    <i class="fas fa-filter"></i> Xóa bộ lọc
-                </button>
-            </div>
-
-            <!-- Products Table -->
-            <div class="table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" onchange="selectAllProducts(this)"></th>
-                            <th>Hình ảnh</th>
-                            <th>Tên sản phẩm</th>
-                            <th>Danh mục</th>
-                            <th>Giá bán</th>
-                            <th>Số lượng</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="products-table-body">
-                        <!-- Will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination" id="products-pagination">
-                <!-- Will be populated by JS -->
-            </div>
-        </section>
-
-        <!-- Orders Section -->
-        <section id="orders-section" class="admin-section">
-            <div class="section-header">
-                <h1>Quản lý đơn hàng</h1>
-                <div class="header-actions">
-                    <button class="btn-secondary" onclick="exportOrders()">
-                        <i class="fas fa-download"></i> Xuất Excel
-                    </button>
-                </div>
-            </div>
-
-            <!-- Order Filters -->
-            <div class="filters-bar">
-                <div class="search-group">
-                    <input type="text" id="order-search" placeholder="Tìm kiếm đơn hàng...">
-                    <button onclick="searchOrders()"><i class="fas fa-search"></i></button>
-                </div>
-                
-                <select id="order-status-filter" onchange="filterOrders()">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="pending">Chờ xử lý</option>
-                    <option value="confirmed">Xác nhận</option>
-                    <option value="shipping">Đang giao</option>
-                    <option value="delivered">Đã giao</option>
-                    <option value="cancelled">Đã hủy</option>
-                </select>
-                
-                <button class="btn-secondary" onclick="clearOrderFilters()">
-                    <i class="fas fa-filter"></i> Xóa bộ lọc
-                </button>
-            </div>
-
-            <!-- Orders Table -->
-            <div class="table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" onchange="selectAllOrders(this)"></th>
-                            <th>Mã đơn hàng</th>
-                            <th>Khách hàng</th>
-                            <th>Tổng tiền</th>
-                            <th>Trạng thái</th>
-                            <th>Ngày đặt</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orders-table-body">
-                        <!-- Will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination" id="orders-pagination">
-                <!-- Will be populated by JS -->
-            </div>
-        </section>
-
-        <!-- Users Section -->
-        <section id="users-section" class="admin-section">
-            <div class="section-header">
-                <h1>Quản lý người dùng</h1>
-                <div class="header-actions">
-                    <button class="btn-secondary" onclick="exportUsers()">
-                        <i class="fas fa-download"></i> Xuất Excel
-                    </button>
-                </div>
-            </div>
-
-            <!-- User Filters -->
-            <div class="filters-bar">
-                <div class="search-group">
-                    <input type="text" id="user-search" placeholder="Tìm kiếm người dùng...">
-                    <button onclick="searchUsers()"><i class="fas fa-search"></i></button>
-                </div>
-                
-                <select id="user-status-filter" onchange="filterUsers()">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="active">Hoạt động</option>
-                    <option value="inactive">Ngừng hoạt động</option>
-                </select>
-                
-                <button class="btn-secondary" onclick="clearUserFilters()">
-                    <i class="fas fa-filter"></i> Xóa bộ lọc
-                </button>
-            </div>
-
-            <!-- Users Table -->
-            <div class="table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" onchange="selectAllUsers(this)"></th>
-                            <th>Người dùng</th>
-                            <th>Email</th>
-                            <th>Số điện thoại</th>
-                            <th>Ngày đăng ký</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="users-table-body">
-                        <!-- Will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination" id="users-pagination">
-                <!-- Will be populated by JS -->
-            </div>
-        </section>
-
-        <!-- Admins Section -->
-        <section id="admins-section" class="admin-section">
-            <div class="section-header">
-                <h1>Quản lý tài khoản admin</h1>
-                <button class="btn-primary" onclick="showAddAdminModal()">
-                    <i class="fas fa-plus"></i> Thêm admin mới
-                </button>
-            </div>
-
-            <!-- Admins Table -->
-            <div class="table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Họ và tên</th>
-                            <th>Vai trò</th>
-                            <th>Ngày tạo</th>
-                            <th>Lần đăng nhập cuối</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admins-table-body">
-                        <!-- Will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Settings Section -->
-        <section id="settings-section" class="admin-section">
-            <div class="section-header">
-                <h1>Cài đặt hệ thống</h1>
-            </div>
-
-            <div class="settings-grid">
-                <!-- Shipping Settings -->
-                <div class="settings-card">
-                    <h3>Cài đặt phí vận chuyển</h3>
-                    <div class="shipping-fees" id="shipping-fees-list">
-                        <!-- Will be populated by JS -->
-                    </div>
-                    <button class="btn-primary" onclick="showAddShippingFeeModal()">
-                        <i class="fas fa-plus"></i> Thêm phí vận chuyển
-                    </button>
-                </div>
-
-                <!-- General Settings -->
-                <div class="settings-card">
-                    <h3>Cài đặt chung</h3>
-                    <form id="general-settings-form">
-                        <div class="form-group">
-                            <label>Ngưỡng miễn phí vận chuyển</label>
-                            <input type="number" id="free-shipping-threshold" value="500000">
-                            <span>VNĐ</span>
-                        </div>
-                        <button type="submit" class="btn-primary">Lưu cài đặt</button>
-                    </form>
-                </div>
-
-                <!-- Banner Settings -->
-                <div class="settings-card">
-                    <h3>Cài đặt Banner</h3>
-                    <div class="banner-upload">
-                        <div class="form-group">
-                            <label>URL ảnh Banner</label>
-                            <input type="url" id="banner-url" placeholder="https://i.imgur.com/example.jpg" class="form-control">
-                            <small class="form-text">
-                                💡 Upload ảnh lên <a href="https://imgur.com" target="_blank">Imgur</a> hoặc GitHub, copy direct link vào đây
-                            </small>
-                        </div>
-                        <button class="btn-primary" onclick="updateBannerImage()">
-                            <i class="fas fa-save"></i> Cập nhật Banner
-                        </button>
-                        <div class="banner-preview" id="banner-preview">
-                            <img src="https://via.placeholder.com/800x300/007bff/ffffff?text=Banner+Preview" alt="Banner Preview" style="max-width: 100%; border-radius: 8px;">
-                        </div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">
+                            <i class="fas fa-dumbbell"></i> SportZone
+                        </h4>
+                        <p class="text-white-50 mb-0" id="adminInfo">Loading...</p>
                     </div>
                     
-                    <div class="upload-guide">
-                        <h4>📖 Hướng dẫn upload ảnh:</h4>
-                        <ol>
-                            <li><strong>Imgur:</strong> Vào <a href="https://imgur.com" target="_blank">imgur.com</a> → Upload → Copy "Direct Link"</li>
-                            <li><strong>GitHub:</strong> Upload vào folder <code>images/</code> → Copy raw URL</li>
-                            <li><strong>Cloudinary:</strong> Upload → Copy image URL</li>
-                        </ol>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                                <i class="fas fa-tachometer-alt"></i> Tổng quan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#products" onclick="showSection('products')">
+                                <i class="fas fa-box"></i> Quản lý sản phẩm
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#orders" onclick="showSection('orders')">
+                                <i class="fas fa-shopping-cart"></i> Quản lý đơn hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#users" onclick="showSection('users')">
+                                <i class="fas fa-users"></i> Quản lý người dùng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#settings" onclick="showSection('settings')">
+                                <i class="fas fa-cog"></i> Cài đặt
+                            </a>
+                        </li>
+                        <li class="nav-item mt-3">
+                            <a class="nav-link text-warning" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="py-4">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+                        <h1 class="h2" id="pageTitle">Tổng quan</h1>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadData()">
+                                <i class="fas fa-refresh"></i> Tải lại
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Bank Info Settings -->
-                <div class="settings-card">
-                    <h3>Thông tin ngân hàng</h3>
-                    <form id="bank-info-form">
-                        <div class="form-group">
-                            <label>Tên ngân hàng</label>
-                            <input type="text" id="bank-name" value="Vietcombank">
-                        </div>
-                        <div class="form-group">
-                            <label>Số tài khoản</label>
-                            <input type="text" id="account-number" value="1234567890">
-                        </div>
-                        <div class="form-group">
-                            <label>Tên chủ tài khoản</label>
-                            <input type="text" id="account-name" value="SPORT ZONE CO LTD">
-                        </div>
-                        <div class="form-group">
-                            <label>Chi nhánh</label>
-                            <input type="text" id="bank-branch" value="Chi nhánh TP.HCM">
-                        </div>
-                        <button type="submit" class="btn-primary">Lưu thông tin</button>
-                    </form>
-                </div>
+                    <!-- Loading -->
+                    <div class="loading" id="loading">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                        <p class="mt-2">Đang tải dữ liệu...</p>
+                    </div>
 
-                <!-- Support Info Settings -->
-                <div class="settings-card">
-                    <h3>Thông tin hỗ trợ 24/7</h3>
-                    <form id="support-info-form">
-                        <div class="form-group">
-                            <label>Hotline</label>
-                            <input type="text" id="support-hotline" value="1900-1234">
-                        </div>
-                        <div class="form-group">
-                            <label>Email hỗ trợ</label>
-                            <input type="email" id="support-email" value="support@sportzone.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Giờ làm việc</label>
-                            <input type="text" id="working-hours" value="8:00 - 22:00 (Thứ 2 - Chủ nhật)">
-                        </div>
-                        <button type="submit" class="btn-primary">Lưu thông tin</button>
-                    </form>
-                </div>
+                    <!-- Error Message -->
+                    <div class="error-message" id="errorMessage">
+                        <i class="fas fa-exclamation-triangle"></i> Có lỗi xảy ra khi tải dữ liệu
+                    </div>
 
-                <!-- Category Images -->
-                <div class="settings-card">
-                    <h3>Cài đặt ảnh danh mục</h3>
-                    <div class="category-images" id="category-images-list">
-                        <div class="category-image-item">
-                            <label>🏈 Bóng đá</label>
-                            <input type="url" id="football-image" placeholder="https://i.imgur.com/football.jpg" value="https://via.placeholder.com/200x200/28a745/ffffff?text=Football">
-                            <button onclick="updateCategoryImage('football')" class="btn-sm btn-primary">Cập nhật</button>
+                    <!-- Dashboard Section -->
+                    <div id="dashboard-section" class="content-section">
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="totalRevenue">0đ</div>
+                                    <div class="stat-label">Tổng doanh thu</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="totalOrders">0</div>
+                                    <div class="stat-label">Đơn hàng thành công</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="totalUsers">0</div>
+                                    <div class="stat-label">Tổng khách hàng</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="totalProducts">0</div>
+                                    <div class="stat-label">Sản phẩm đang bán</div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="category-image-item">
-                            <label>🏀 Bóng rổ</label>
-                            <input type="url" id="basketball-image" placeholder="https://i.imgur.com/basketball.jpg" value="https://via.placeholder.com/200x200/fd7e14/ffffff?text=Basketball">
-                            <button onclick="updateCategoryImage('basketball')" class="btn-sm btn-primary">Cập nhật</button>
-                        </div>
-                        
-                        <div class="category-image-item">
-                            <label>🎾 Tennis</label>
-                            <input type="url" id="tennis-image" placeholder="https://i.imgur.com/tennis.jpg" value="https://via.placeholder.com/200x200/e74c3c/ffffff?text=Tennis">
-                            <button onclick="updateCategoryImage('tennis')" class="btn-sm btn-primary">Cập nhật</button>
-                        </div>
-                        
-                        <div class="category-image-item">
-                            <label>🏃 Chạy bộ</label>
-                            <input type="url" id="running-image" placeholder="https://i.imgur.com/running.jpg" value="https://via.placeholder.com/200x200/9b59b6/ffffff?text=Running">
-                            <button onclick="updateCategoryImage('running')" class="btn-sm btn-primary">Cập nhật</button>
-                        </div>
-                        
-                        <div class="category-image-item">
-                            <label>💪 Gym & Fitness</label>
-                            <input type="url" id="gym-image" placeholder="https://i.imgur.com/gym.jpg" value="https://via.placeholder.com/200x200/17a2b8/ffffff?text=Gym">
-                            <button onclick="updateCategoryImage('gym')" class="btn-sm btn-primary">Cập nhật</button>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="fas fa-chart-line"></i> Hoạt động gần đây</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Dashboard đang hoạt động bình thường. Dữ liệu được cập nhật từ database Supabase.</p>
+                                        <div class="mt-3">
+                                            <button class="btn btn-primary btn-sm" onclick="loadStats()">
+                                                <i class="fas fa-sync"></i> Cập nhật thống kê
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
-    </main>
 
-    <!-- Modals -->
-    <!-- Add Product Modal -->
-    <div id="add-product-modal" class="admin-modal">
-        <div class="modal-content large">
-            <span class="close" onclick="closeAdminModal('add-product-modal')">&times;</span>
-            <h2>Thêm sản phẩm mới</h2>
-            <form id="add-product-form">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Tên sản phẩm *</label>
-                        <input type="text" name="name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Danh mục *</label>
-                        <select name="category" required>
-                            <option value="">Chọn danh mục</option>
-                            <option value="football">Bóng đá</option>
-                            <option value="basketball">Bóng rổ</option>
-                            <option value="tennis">Tennis</option>
-                            <option value="running">Chạy bộ</option>
-                            <option value="gym">Gym & Fitness</option>
-                        </select>
-                    </div>
-                    <div class="form-group full-width">
-                        <label>Mô tả</label>
-                        <textarea name="description" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Giá gốc</label>
-                        <input type="number" name="originalPrice" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Giá khuyến mãi</label>
-                        <input type="number" name="salePrice" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Số lượng</label>
-                        <input type="number" name="stock" min="0" value="0">
-                    </div>
-                    <div class="form-group full-width">
-                        <label>Hình ảnh sản phẩm (URL)</label>
-                        <input type="url" name="imageUrl" placeholder="https://i.imgur.com/product-image.jpg" class="form-control">
-                        <small class="form-text">
-                            💡 Upload ảnh lên <a href="https://imgur.com" target="_blank">Imgur</a>, copy direct link vào đây
-                        </small>
-                        <div class="image-preview" id="product-image-preview" style="margin-top: 10px;">
-                            <!-- Preview will show here -->
+                    <!-- Products Section -->
+                    <div id="products-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-box"></i> Danh sách sản phẩm</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">Quản lý sản phẩm đang được phát triển...</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Trạng thái</label>
-                        <select name="status">
-                            <option value="active">Hoạt động</option>
-                            <option value="inactive">Ngừng bán</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" name="featured"> Sản phẩm nổi bật
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" name="onSale"> Sản phẩm sale
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" name="comingSoon"> Hàng sắp về
-                        </label>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="closeAdminModal('add-product-modal')">Hủy</button>
-                    <button type="submit" class="btn-primary">Thêm sản phẩm</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Order Detail Modal -->
-    <div id="order-detail-modal" class="admin-modal">
-        <div class="modal-content large">
-            <span class="close" onclick="closeAdminModal('order-detail-modal')">&times;</span>
-            <h2>Chi tiết đơn hàng</h2>
-            <div id="order-detail-content">
-                <!-- Will be populated by JS -->
-            </div>
-        </div>
-    </div>
+                    <!-- Orders Section -->
+                    <div id="orders-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-shopping-cart"></i> Danh sách đơn hàng</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">Quản lý đơn hàng đang được phát triển...</p>
+                            </div>
+                        </div>
+                    </div>
 
-    <!-- Add Admin Modal -->
-    <div id="add-admin-modal" class="admin-modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeAdminModal('add-admin-modal')">&times;</span>
-            <h2>Thêm admin mới</h2>
-            <form id="add-admin-form">
-                <div class="form-group">
-                    <label>Email *</label>
-                    <input type="email" name="email" required>
+                    <!-- Users Section -->
+                    <div id="users-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-users"></i> Danh sách người dùng</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">Quản lý người dùng đang được phát triển...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div id="settings-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-cog"></i> Cài đặt hệ thống</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">Cài đặt hệ thống đang được phát triển...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Họ và tên *</label>
-                    <input type="text" name="fullName" required>
-                </div>
-                <div class="form-group">
-                    <label>Mật khẩu *</label>
-                    <input type="password" name="password" required>
-                </div>
-                <div class="form-group">
-                    <label>Vai trò *</label>
-                    <select name="role" required>
-                        <option value="">Chọn vai trò</option>
-                        <option value="admin">Admin</option>
-                        <option value="staff">Nhân viên</option>
-                        <option value="super_admin">Super Admin</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="closeAdminModal('add-admin-modal')">Hủy</button>
-                    <button type="submit" class="btn-primary">Thêm admin</button>
-                </div>
-            </form>
+            </main>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="js/data.js"></script>
-    <!-- Load Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js"></script>
-    <!-- Load our Supabase config and admin scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/supabase.js"></script>
-    <script src="js/admin-supabase.js"></script>
+    
+    <script>
+        // Global variables
+        let currentAdmin = null;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Get admin info from localStorage
+                const adminData = localStorage.getItem('currentAdmin');
+                if (adminData) {
+                    currentAdmin = JSON.parse(adminData);
+                    document.getElementById('adminInfo').textContent = currentAdmin.email;
+                }
+                
+                // Load initial data
+                await loadStats();
+                
+            } catch (error) {
+                console.error('Page initialization error:', error);
+                showError('Có lỗi xảy ra khi khởi tạo trang');
+            }
+        });
+        
+        // Load dashboard statistics
+        async function loadStats() {
+            try {
+                showLoading(true);
+                hideError();
+                
+                if (!window.supabaseClient) {
+                    throw new Error('Database chưa sẵn sàng');
+                }
+                
+                // Get stats from database
+                const stats = await window.supabaseClient.getDashboardStats();
+                
+                // Update UI
+                document.getElementById('totalRevenue').textContent = formatCurrency(stats.totalRevenue);
+                document.getElementById('totalOrders').textContent = stats.totalOrders;
+                document.getElementById('totalUsers').textContent = stats.totalUsers;
+                document.getElementById('totalProducts').textContent = stats.totalProducts;
+                
+                console.log('✅ Stats loaded successfully:', stats);
+                
+            } catch (error) {
+                console.error('❌ Failed to load stats:', error);
+                showError('Không thể tải thống kê: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+        
+        // Show/hide loading
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        // Show error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+            errorDiv.style.display = 'block';
+        }
+        
+        // Hide error
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        // Show section
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.style.display = 'none');
+            
+            // Show selected section
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            
+            // Update active nav link
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Tổng quan',
+                'products': 'Quản lý sản phẩm',
+                'orders': 'Quản lý đơn hàng',
+                'users': 'Quản lý người dùng',
+                'settings': 'Cài đặt hệ thống'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionName] || 'SportZone Admin';
+        }
+        
+        // Load data
+        function loadData() {
+            loadStats();
+        }
+        
+        // Logout
+        function logout() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                localStorage.removeItem('currentAdmin');
+                window.location.href = 'admin-login.html';
+            }
+        }
+    </script>
 </body>
 </html>
