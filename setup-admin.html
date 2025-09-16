@@ -3,442 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo Admin Đầu Tiên - SportZone</title>
+    <title>Setup Admin Đầu Tiên - SportZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
         .setup-container {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
-            width: 100%;
             max-width: 500px;
-            padding: 50px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .logo i {
-            font-size: 2.5rem;
-            color: #667eea;
-            margin-right: 15px;
-        }
-
-        .logo span {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .setup-title {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .setup-subtitle {
-            color: #666;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input {
             width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
         }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn-create {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .setup-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .setup-header .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .setup-body {
+            padding: 2rem;
+        }
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .btn-setup {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            padding: 12px 24px;
             font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s;
-            margin-bottom: 20px;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s ease;
         }
-
-        .btn-create:hover {
+        .btn-setup:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
         }
-
-        .btn-create:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .btn-setup:disabled {
+            opacity: 0.6;
             transform: none;
         }
-
         .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 5px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
             display: none;
         }
-
+        .error-message h4 {
+            color: #dc2626;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .error-message p {
+            color: #991b1b;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
         .success-message {
-            color: #155724;
-            font-size: 14px;
-            margin-top: 10px;
-            padding: 10px;
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 5px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
             display: none;
         }
-
-        .loading {
+        .success-message h4 {
+            color: #166534;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .loading-spinner {
             display: none;
-            text-align: center;
-            margin-top: 10px;
         }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .notice {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
             border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
+            padding: 1rem;
+            margin-bottom: 1rem;
         }
-
-        .notice h4 {
-            color: #0c5460;
-            margin-bottom: 10px;
+        .info-box h5 {
+            color: #1e40af;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
-
-        .notice p {
-            color: #0c5460;
-            margin-bottom: 5px;
+        .info-box ul {
+            color: #1e3a8a;
+            font-size: 0.8rem;
+            margin-bottom: 0;
+            padding-left: 1.2rem;
         }
-
-        .check-status {
-            background: #f8f9fa;
+        .alert {
             border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .status-item i {
-            margin-right: 10px;
-            width: 20px;
-        }
-
-        .status-ok {
-            color: #28a745;
-        }
-
-        .status-error {
-            color: #dc3545;
-        }
-
-        .btn-login {
-            background: #28a745;
-            color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 10px;
+            padding: 1rem;
         }
-
-        .btn-login:hover {
-            background: #218838;
-            color: white;
-            text-decoration: none;
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
         }
     </style>
 </head>
 <body>
-    <div class="setup-container">
-        <div class="logo">
-            <i class="fas fa-dumbbell"></i>
-            <span>SportZone</span>
-        </div>
-        
-        <h1 class="setup-title">Setup Admin Đầu Tiên</h1>
-        <p class="setup-subtitle">Tạo tài khoản quản trị viên đầu tiên cho hệ thống</p>
-
-        <!-- Status Check -->
-        <div class="check-status">
-            <h4>Kiểm tra kết nối:</h4>
-            <div id="statusList">
-                <div class="status-item">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Đang kiểm tra kết nối Supabase...</span>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="setup-container">
+                    <div class="setup-header">
+                        <div class="logo">
+                            <i class="fas fa-dumbbell"></i> SportZone
+                        </div>
+                        <h2>Setup Admin Đầu Tiên</h2>
+                        <p class="mb-0">Tạo tài khoản quản trị viên đầu tiên cho hệ thống</p>
+                    </div>
+                    
+                    <div class="setup-body">
+                        <!-- Error Message -->
+                        <div class="error-message" id="errorMessage">
+                            <h4>❌ Kết nối thất bại:</h4>
+                            <p>Database not setup</p>
+                        </div>
+                        
+                        <!-- Success Message -->
+                        <div class="success-message" id="successMessage">
+                            <h4>✅ Tạo admin thành công!</h4>
+                            <p>Tài khoản quản trị đã được tạo. Bạn có thể đăng nhập vào admin panel.</p>
+                            <div class="mt-2">
+                                <a href="admin-login.html" class="btn btn-success btn-sm">
+                                    <i class="fas fa-sign-in-alt"></i> Đăng nhập Admin
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Info Box -->
+                        <div class="info-box">
+                            <h5><i class="fas fa-info-circle"></i> Lưu ý quan trọng:</h5>
+                            <ul>
+                                <li>Chỉ chạy setup này một lần khi mới cài đặt</li>
+                                <li>Đảm bảo đã setup database Supabase trước</li>
+                                <li>Tài khoản này sẽ có quyền quản trị cao nhất</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Setup Form -->
+                        <form id="setupForm">
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">
+                                    <i class="fas fa-user"></i> Họ và tên
+                                </label>
+                                <input type="text" class="form-control" id="fullName" 
+                                       placeholder="Nhập họ và tên quản trị viên" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i> Email
+                                </label>
+                                <input type="email" class="form-control" id="email" 
+                                       placeholder="admin@sportzone.com" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-setup" id="submitBtn">
+                                <span class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang tạo...
+                                </span>
+                                <span class="normal-text">
+                                    <i class="fas fa-user-plus"></i> Tạo Admin Account
+                                </span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Notice -->
-        <div class="notice">
-            <h4><i class="fas fa-info-circle"></i> Lưu ý quan trọng:</h4>
-            <p>• Chỉ chạy setup này một lần khi mới cài đặt</p>
-            <p>• Đảm bảo đã setup database Supabase trước</p>
-            <p>• Tài khoản này sẽ có quyền quản trị cao nhất</p>
-        </div>
-
-        <form id="setupForm" style="display: none;">
-            <div class="form-group">
-                <label for="fullName">Họ và tên:</label>
-                <input type="text" id="fullName" name="fullName" required>
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Mật khẩu:</label>
-                <input type="password" id="password" name="password" required minlength="6">
-            </div>
-
-            <div class="form-group">
-                <label for="confirmPassword">Xác nhận mật khẩu:</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6">
-            </div>
-
-            <button type="submit" class="btn-create" id="createBtn">
-                <i class="fas fa-user-plus"></i> Tạo tài khoản Admin
-            </button>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                Đang tạo tài khoản...
-            </div>
-
-            <div class="error-message" id="errorMessage"></div>
-            <div class="success-message" id="successMessage"></div>
-        </form>
-
-        <div id="alreadyExists" style="display: none; text-align: center;">
-            <div class="success-message" style="display: block;">
-                <h4>Hệ thống đã có admin!</h4>
-                <p>Tài khoản admin đã tồn tại trong hệ thống.</p>
-                <a href="admin-login.html" class="btn-login">Đăng nhập ngay</a>
             </div>
         </div>
     </div>
 
-    <!-- Load Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js"></script>
-    <script src="js/supabase.js"></script>
-
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/supabase-emergency.js"></script>
+    
     <script>
-        // Check system status
-        async function checkStatus() {
-            const statusList = document.getElementById('statusList');
-            
-            try {
-                // Check Supabase connection
-                if (typeof supabase === 'undefined') {
-                    throw new Error('Supabase not loaded');
-                }
-                
-                statusList.innerHTML = `
-                    <div class="status-item">
-                        <i class="fas fa-check status-ok"></i>
-                        <span>Kết nối Supabase: OK</span>
-                    </div>
-                `;
-                
-                // Check if admin already exists
-                const { data: admins, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('role', 'admin')
-                    .limit(1);
-                
-                if (error) {
-                    throw new Error('Database not setup: ' + error.message);
-                }
-                
-                if (admins && admins.length > 0) {
-                    statusList.innerHTML += `
-                        <div class="status-item">
-                            <i class="fas fa-check status-ok"></i>
-                            <span>Database: OK</span>
-                        </div>
-                        <div class="status-item">
-                            <i class="fas fa-info-circle" style="color: #ffc107;"></i>
-                            <span>Admin đã tồn tại</span>
-                        </div>
-                    `;
-                    document.getElementById('alreadyExists').style.display = 'block';
-                } else {
-                    statusList.innerHTML += `
-                        <div class="status-item">
-                            <i class="fas fa-check status-ok"></i>
-                            <span>Database: OK</span>
-                        </div>
-                        <div class="status-item">
-                            <i class="fas fa-exclamation-triangle" style="color: #ffc107;"></i>
-                            <span>Chưa có admin nào</span>
-                        </div>
-                    `;
-                    document.getElementById('setupForm').style.display = 'block';
-                }
-                
-            } catch (error) {
-                console.error('Status check error:', error);
-                statusList.innerHTML = `
-                    <div class="status-item">
-                        <i class="fas fa-times status-error"></i>
-                        <span>Kết nối thất bại: ${error.message}</span>
-                    </div>
-                    <div class="status-item">
-                        <i class="fas fa-info-circle" style="color: #ffc107;"></i>
-                        <span>Vui lòng setup database trước</span>
-                    </div>
-                `;
-            }
+        // DOM elements
+        const form = document.getElementById('setupForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+        const normalText = submitBtn.querySelector('.normal-text');
+        
+        // Show loading state
+        function showLoading() {
+            submitBtn.disabled = true;
+            loadingSpinner.style.display = 'inline';
+            normalText.style.display = 'none';
         }
         
-        // Setup form submission
-        document.getElementById('setupForm').addEventListener('submit', async function(e) {
+        // Hide loading state
+        function hideLoading() {
+            submitBtn.disabled = false;
+            loadingSpinner.style.display = 'none';
+            normalText.style.display = 'inline';
+        }
+        
+        // Show error
+        function showError(message) {
+            errorMessage.querySelector('p').textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+        
+        // Show success
+        function showSuccess() {
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+            form.style.display = 'none';
+        }
+        
+        // Handle form submission
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const fullName = document.getElementById('fullName').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const createBtn = document.getElementById('createBtn');
-            const loading = document.getElementById('loading');
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
-            
-            // Validate passwords
-            if (password !== confirmPassword) {
-                errorMessage.textContent = 'Mật khẩu xác nhận không khớp';
-                errorMessage.style.display = 'block';
-                return;
-            }
-            
-            // Show loading
-            createBtn.disabled = true;
-            loading.style.display = 'block';
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
+            showLoading();
             
             try {
-                // Create admin user
-                const result = await createAdminUser({
-                    email: email,
-                    password: password,
-                    fullName: fullName
-                });
+                // Get form data
+                const fullName = document.getElementById('fullName').value.trim();
+                const email = document.getElementById('email').value.trim();
                 
-                // Success
-                successMessage.innerHTML = `
-                    <h4>Tạo tài khoản thành công!</h4>
-                    <p>Tài khoản admin đã được tạo thành công.</p>
-                    <p><strong>Email:</strong> ${email}</p>
-                    <a href="admin-login.html" class="btn-login">Đăng nhập ngay</a>
-                `;
-                successMessage.style.display = 'block';
-                
-                // Hide form
-                document.getElementById('setupForm').style.display = 'none';
-                
-            } catch (error) {
-                console.error('Create admin error:', error);
-                let errorText = 'Tạo tài khoản thất bại';
-                
-                if (error.message.includes('User already registered')) {
-                    errorText = 'Email đã được sử dụng';
-                } else if (error.message.includes('Password should be at least 6 characters')) {
-                    errorText = 'Mật khẩu phải có ít nhất 6 ký tự';
-                } else {
-                    errorText = error.message || 'Lỗi hệ thống';
+                // Validate
+                if (!fullName || !email) {
+                    throw new Error('Vui lòng điền đầy đủ thông tin');
                 }
                 
-                errorMessage.textContent = errorText;
-                errorMessage.style.display = 'block';
+                // Check if Supabase is ready
+                if (!window.supabaseClient || !window.supabaseClient.isReady()) {
+                    throw new Error('Database chưa sẵn sàng. Vui lòng refresh trang và thử lại.');
+                }
+                
+                // Check if admin already exists
+                const adminExists = await window.supabaseClient.checkAdminExists();
+                if (adminExists) {
+                    throw new Error('Tài khoản admin đã tồn tại. Setup chỉ có thể chạy một lần.');
+                }
+                
+                // Create admin
+                const result = await window.supabaseClient.createFirstAdmin({
+                    fullName: fullName,
+                    email: email
+                });
+                
+                console.log('Admin created successfully:', result);
+                showSuccess();
+                
+            } catch (error) {
+                console.error('Setup failed:', error);
+                showError(error.message || 'Có lỗi xảy ra khi tạo tài khoản admin');
             } finally {
-                // Hide loading
-                createBtn.disabled = false;
-                loading.style.display = 'none';
+                hideLoading();
             }
         });
         
-        // Initialize
+        // Check database connection on page load
         window.addEventListener('load', function() {
-            // Wait for Supabase to load
-            setTimeout(checkStatus, 1000);
+            setTimeout(() => {
+                if (window.supabaseClient && window.supabaseClient.isReady()) {
+                    console.log('✅ Database connection ready');
+                    errorMessage.style.display = 'none';
+                } else {
+                    console.log('⚠️ Database not ready yet...');
+                }
+            }, 2000);
         });
     </script>
 </body>
