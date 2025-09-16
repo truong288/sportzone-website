@@ -1,598 +1,274 @@
-// Supabase Configuration and Database Functions
-
-// Supabase project configuration
+// Supabase Configuration - Emergency Fix Version
 const SUPABASE_URL = 'https://nmrbzdwhzbkbpmizxqvo.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tcmJ6ZHdoemJrYnBtaXp4cXZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODYzOTYsImV4cCI6MjA3MzU2MjM5Nn0.ojLDOWCOR0nFxn8jl9SIr4gS4xOmhPQGM7QIEtez1Wk'; // You need to get this from your Supabase dashboard
 
-// Initialize Supabase client
+// 🔑 THAY ĐỔI API KEY TẠI ĐÂY (lấy từ Supabase Dashboard > Settings > API)
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tcmJ6ZHdoemJrYnBtaXp4cXZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODYzOTYsImV4cCI6MjA3MzU2MjM5Nn0.ojLDOWCOR0nFxn8jl9SIr4gS4xOmhPQGM7QIEtez1Wk';
+
+// Global variables
 let supabase;
+let isSupabaseReady = false;
 
-// Load Supabase client
-function loadSupabase() {
-    if (typeof window.supabase === 'undefined') {
-        // Load Supabase from CDN if not already loaded
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js';
-        script.onload = initSupabase;
-        document.head.appendChild(script);
-    } else {
-        initSupabase();
+// Initialize Supabase when page loads
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadSupabase();
+});
+
+async function loadSupabase() {
+    try {
+        console.log('🔄 Loading Supabase...');
+        
+        // Check API key
+        if (SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+            throw new Error('API key not configured. Please update SUPABASE_ANON_KEY in js/supabase.js');
+        }
+        
+        // Load Supabase from CDN if not loaded
+        if (typeof window.supabase === 'undefined') {
+            await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+        }
+        
+        // Initialize client
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        console.log('✅ Supabase client created');
+        
+        // Test connection with simple query
+        await testConnection();
+        
+        isSupabaseReady = true;
+        console.log('✅ Supabase ready!');
+        
+        // Hide error messages if any
+        hideError();
+        
+    } catch (error) {
+        console.error('❌ Supabase initialization failed:', error);
+        showError('Database connection failed: ' + error.message);
+        isSupabaseReady = false;
     }
 }
 
-// Initialize Supabase
-function initSupabase() {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase initialized');
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
 }
 
-// Database Table Schemas (for reference)
-/*
-1. users
-   - id (uuid, primary key)
-   - email (text, unique)
-   - full_name (text)
-   - phone (text)
-   - role (text) - 'customer', 'admin'
-   - created_at (timestamp)
-   - last_login (timestamp)
-   - status (text) - 'active', 'inactive'
-
-2. products
-   - id (uuid, primary key)
-   - name (text)
-   - description (text)
-   - price (bigint)
-   - category_id (uuid, foreign key)
-   - image_url (text)
-   - stock_quantity (integer)
-   - status (text) - 'active', 'inactive', 'out_of_stock'
-   - created_at (timestamp)
-   - updated_at (timestamp)
-
-3. categories
-   - id (uuid, primary key)
-   - name (text)
-   - description (text)
-   - image_url (text)
-   - created_at (timestamp)
-
-4. orders
-   - id (uuid, primary key)
-   - order_code (text, unique)
-   - customer_name (text)
-   - customer_email (text)
-   - customer_phone (text)
-   - shipping_address (jsonb)
-   - payment_method (text)
-   - subtotal (bigint)
-   - shipping_cost (bigint)
-   - discount_amount (bigint)
-   - total (bigint)
-   - status (text) - 'pending', 'confirmed', 'shipping', 'delivered', 'cancelled'
-   - notes (text)
-   - created_at (timestamp)
-   - updated_at (timestamp)
-
-5. order_items
-   - id (uuid, primary key)
-   - order_id (uuid, foreign key)
-   - product_id (uuid, foreign key)
-   - product_name (text)
-   - product_price (bigint)
-   - quantity (integer)
-   - subtotal (bigint)
-
-6. banners
-   - id (uuid, primary key)
-   - title (text)
-   - image_url (text)
-   - link_url (text)
-   - status (text) - 'active', 'inactive'
-   - sort_order (integer)
-   - created_at (timestamp)
-
-7. admin_settings
-   - id (uuid, primary key)
-   - setting_key (text, unique)
-   - setting_value (jsonb)
-   - updated_at (timestamp)
-*/
-
-// Auth Functions
-async function loginUser(email, password) {
+async function testConnection() {
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+        // Simple test query that shouldn't trigger RLS issues
+        const { data, error } = await supabase
+            .from('admins')
+            .select('count', { count: 'exact', head: true });
+            
+        if (error) {
+            console.warn('⚠️ Test query failed:', error.message);
+            // Don't throw error, might be table doesn't exist yet
+        } else {
+            console.log('✅ Database connection successful');
+        }
         
-        if (error) throw error;
+    } catch (error) {
+        console.warn('⚠️ Connection test failed:', error.message);
+        // Don't throw, let the app continue
+    }
+}
+
+function showError(message) {
+    const errorDiv = document.querySelector('.error-message');
+    if (errorDiv) {
+        errorDiv.innerHTML = `
+            <h4>❌ Kết nối thất bại:</h4>
+            <p>${message}</p>
+            <div class="alert alert-warning">
+                <h5>⚠️ Vui lòng setup database trước</h5>
+                <ul>
+                    <li>Chỉ chạy setup này một lần khi mới cài đặt</li>
+                    <li>Đảm bảo đã setup database Supabase trước</li>
+                    <li>Tài khoản này sẽ có quyền quản trị cao nhất</li>
+                </ul>
+            </div>
+        `;
+        errorDiv.style.display = 'block';
+    }
+}
+
+function hideError() {
+    const errorDiv = document.querySelector('.error-message');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
+
+// Admin Management Functions
+async function createFirstAdmin(adminData) {
+    try {
+        if (!isSupabaseReady) {
+            throw new Error('Database not ready. Please refresh the page.');
+        }
         
-        // Get user profile
-        const { data: profile, error: profileError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', email)
+        console.log('🔄 Creating first admin...');
+        
+        // Check if any admin exists
+        const { count, error: countError } = await supabase
+            .from('admins')
+            .select('*', { count: 'exact', head: true });
+            
+        if (countError) {
+            console.error('Count error:', countError);
+            throw new Error('Failed to check existing admins: ' + countError.message);
+        }
+        
+        if (count > 0) {
+            throw new Error('Admin account already exists. This setup can only be run once.');
+        }
+        
+        // Insert new admin
+        const { data, error } = await supabase
+            .from('admins')
+            .insert([{
+                email: adminData.email,
+                full_name: adminData.fullName,
+                role: 'super_admin',
+                is_active: true,
+                created_at: new Date().toISOString()
+            }])
+            .select()
             .single();
             
-        if (profileError) throw profileError;
+        if (error) {
+            console.error('Insert error:', error);
+            throw new Error('Failed to create admin: ' + error.message);
+        }
+        
+        console.log('✅ Admin created successfully:', data);
+        return data;
+        
+    } catch (error) {
+        console.error('❌ Create admin failed:', error);
+        throw error;
+    }
+}
+
+async function checkAdminExists() {
+    try {
+        if (!isSupabaseReady) {
+            return false;
+        }
+        
+        const { count, error } = await supabase
+            .from('admins')
+            .select('*', { count: 'exact', head: true });
+            
+        if (error) {
+            console.error('Check admin exists error:', error);
+            return false;
+        }
+        
+        return count > 0;
+        
+    } catch (error) {
+        console.error('Check admin exists failed:', error);
+        return false;
+    }
+}
+
+async function loginAdmin(email) {
+    try {
+        if (!isSupabaseReady) {
+            throw new Error('Database not ready');
+        }
+        
+        const { data, error } = await supabase
+            .from('admins')
+            .select('*')
+            .eq('email', email)
+            .eq('is_active', true)
+            .single();
+            
+        if (error) {
+            throw new Error('Admin not found or inactive');
+        }
         
         // Update last login
         await supabase
-            .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', profile.id);
-        
-        return { user: data.user, profile };
-    } catch (error) {
-        console.error('Login error:', error);
-        throw error;
-    }
-}
-
-async function registerUser(userData) {
-    try {
-        const { data, error } = await supabase.auth.signUp({
-            email: userData.email,
-            password: userData.password
-        });
-        
-        if (error) throw error;
-        
-        // Insert user profile
-        const { data: profile, error: profileError } = await supabase
-            .from('users')
-            .insert([{
-                id: data.user.id,
-                email: userData.email,
-                full_name: userData.fullName,
-                phone: userData.phone,
-                role: 'customer',
-                status: 'active'
-            }])
-            .select()
-            .single();
-            
-        if (profileError) throw profileError;
-        
-        return { user: data.user, profile };
-    } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
-    }
-}
-
-async function logoutUser() {
-    try {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        
-        // Clear local storage
-        localStorage.removeItem('currentUser');
-        
-        return true;
-    } catch (error) {
-        console.error('Logout error:', error);
-        throw error;
-    }
-}
-
-// Product Functions
-async function getProducts(filters = {}) {
-    try {
-        let query = supabase
-            .from('products')
-            .select(`
-                *,
-                categories (
-                    id,
-                    name,
-                    image_url
-                )
-            `);
-        
-        if (filters.category_id) {
-            query = query.eq('category_id', filters.category_id);
-        }
-        
-        if (filters.status) {
-            query = query.eq('status', filters.status);
-        }
-        
-        const { data, error } = await query.order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Get products error:', error);
-        throw error;
-    }
-}
-
-async function addProduct(productData) {
-    try {
-        const { data, error } = await supabase
-            .from('products')
-            .insert([productData])
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Add product error:', error);
-        throw error;
-    }
-}
-
-async function updateProduct(id, productData) {
-    try {
-        const { data, error } = await supabase
-            .from('products')
-            .update({ ...productData, updated_at: new Date().toISOString() })
-            .eq('id', id)
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Update product error:', error);
-        throw error;
-    }
-}
-
-async function deleteProduct(id) {
-    try {
-        const { error } = await supabase
-            .from('products')
-            .delete()
-            .eq('id', id);
-        
-        if (error) throw error;
-        return true;
-    } catch (error) {
-        console.error('Delete product error:', error);
-        throw error;
-    }
-}
-
-// Category Functions
-async function getCategories() {
-    try {
-        const { data, error } = await supabase
-            .from('categories')
-            .select('*')
-            .order('name');
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Get categories error:', error);
-        throw error;
-    }
-}
-
-async function addCategory(categoryData) {
-    try {
-        const { data, error } = await supabase
-            .from('categories')
-            .insert([categoryData])
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Add category error:', error);
-        throw error;
-    }
-}
-
-async function updateCategory(id, categoryData) {
-    try {
-        const { data, error } = await supabase
-            .from('categories')
-            .update(categoryData)
-            .eq('id', id)
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Update category error:', error);
-        throw error;
-    }
-}
-
-// Order Functions
-async function createOrder(orderData) {
-    try {
-        // Start transaction
-        const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .insert([{
-                order_code: orderData.orderCode,
-                customer_name: orderData.customer.fullName,
-                customer_email: orderData.customer.email,
-                customer_phone: orderData.customer.phone,
-                shipping_address: orderData.shipping,
-                payment_method: orderData.payment.method,
-                subtotal: orderData.subtotal,
-                shipping_cost: orderData.shippingCost,
-                discount_amount: orderData.discountAmount || 0,
-                total: orderData.total,
-                status: 'pending',
-                notes: orderData.notes
-            }])
-            .select()
-            .single();
-        
-        if (orderError) throw orderError;
-        
-        // Add order items
-        const orderItems = orderData.items.map(item => ({
-            order_id: order.id,
-            product_id: item.id,
-            product_name: item.name,
-            product_price: item.price,
-            quantity: item.quantity,
-            subtotal: item.price * item.quantity
-        }));
-        
-        const { error: itemsError } = await supabase
-            .from('order_items')
-            .insert(orderItems);
-        
-        if (itemsError) throw itemsError;
-        
-        return order;
-    } catch (error) {
-        console.error('Create order error:', error);
-        throw error;
-    }
-}
-
-async function getOrders(filters = {}) {
-    try {
-        let query = supabase
-            .from('orders')
-            .select(`
-                *,
-                order_items (
-                    *
-                )
-            `);
-        
-        if (filters.status) {
-            query = query.eq('status', filters.status);
-        }
-        
-        const { data, error } = await query.order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Get orders error:', error);
-        throw error;
-    }
-}
-
-async function updateOrderStatus(id, status) {
-    try {
-        const { data, error } = await supabase
-            .from('orders')
+            .from('admins')
             .update({ 
-                status: status,
+                last_login: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             })
-            .eq('id', id)
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Update order status error:', error);
-        throw error;
-    }
-}
-
-// User Management Functions
-async function getUsers(filters = {}) {
-    try {
-        let query = supabase
-            .from('users')
-            .select('*');
-        
-        if (filters.role) {
-            query = query.eq('role', filters.role);
-        }
-        
-        if (filters.status) {
-            query = query.eq('status', filters.status);
-        }
-        
-        const { data, error } = await query.order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Get users error:', error);
-        throw error;
-    }
-}
-
-async function updateUserStatus(id, status) {
-    try {
-        const { data, error } = await supabase
-            .from('users')
-            .update({ status: status })
-            .eq('id', id)
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Update user status error:', error);
-        throw error;
-    }
-}
-
-async function createAdminUser(userData) {
-    try {
-        const { data, error } = await supabase.auth.signUp({
-            email: userData.email,
-            password: userData.password
-        });
-        
-        if (error) throw error;
-        
-        // Insert admin profile
-        const { data: profile, error: profileError } = await supabase
-            .from('users')
-            .insert([{
-                id: data.user.id,
-                email: userData.email,
-                full_name: userData.fullName,
-                role: 'admin',
-                status: 'active'
-            }])
-            .select()
-            .single();
+            .eq('id', data.id);
             
-        if (profileError) throw profileError;
-        
-        return { user: data.user, profile };
-    } catch (error) {
-        console.error('Create admin user error:', error);
-        throw error;
-    }
-}
-
-// Banner Functions
-async function getBanners() {
-    try {
-        const { data, error } = await supabase
-            .from('banners')
-            .select('*')
-            .order('sort_order');
-        
-        if (error) throw error;
         return data;
-    } catch (error) {
-        console.error('Get banners error:', error);
-        throw error;
-    }
-}
-
-async function updateBanner(id, bannerData) {
-    try {
-        const { data, error } = await supabase
-            .from('banners')
-            .update(bannerData)
-            .eq('id', id)
-            .select()
-            .single();
         
-        if (error) throw error;
-        return data;
     } catch (error) {
-        console.error('Update banner error:', error);
+        console.error('Login admin error:', error);
         throw error;
     }
 }
 
-// Statistics Functions
+// Dashboard Stats Functions
 async function getDashboardStats() {
     try {
-        // Get total revenue
-        const { data: orders, error: ordersError } = await supabase
-            .from('orders')
-            .select('total, status')
-            .eq('status', 'delivered');
+        if (!isSupabaseReady) {
+            return {
+                totalRevenue: 0,
+                totalOrders: 0,
+                totalUsers: 0,
+                totalProducts: 0
+            };
+        }
         
-        if (ordersError) throw ordersError;
+        // Simple queries to avoid RLS issues
+        const [ordersResult, usersResult, productsResult] = await Promise.allSettled([
+            supabase.from('orders').select('total_amount, status', { count: 'exact' }),
+            supabase.from('users').select('*', { count: 'exact', head: true }),
+            supabase.from('products').select('*', { count: 'exact', head: true })
+        ]);
         
-        const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+        // Calculate stats safely
+        let totalRevenue = 0;
+        let totalOrders = 0;
         
-        // Get successful orders count
-        const successfulOrders = orders.length;
+        if (ordersResult.status === 'fulfilled' && ordersResult.value.data) {
+            const orders = ordersResult.value.data;
+            totalOrders = orders.length;
+            totalRevenue = orders
+                .filter(order => order.status === 'delivered')
+                .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        }
         
-        // Get total customers
-        const { count: totalCustomers, error: customersError } = await supabase
-            .from('users')
-            .select('*', { count: 'exact', head: true })
-            .eq('role', 'customer');
-        
-        if (customersError) throw customersError;
-        
-        // Get total products
-        const { count: totalProducts, error: productsError } = await supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'active');
-        
-        if (productsError) throw productsError;
+        const totalUsers = usersResult.status === 'fulfilled' ? (usersResult.value.count || 0) : 0;
+        const totalProducts = productsResult.status === 'fulfilled' ? (productsResult.value.count || 0) : 0;
         
         return {
             totalRevenue,
-            successfulOrders,
-            totalCustomers,
+            totalOrders,
+            totalUsers,
             totalProducts
         };
+        
     } catch (error) {
         console.error('Get dashboard stats error:', error);
-        throw error;
+        return {
+            totalRevenue: 0,
+            totalOrders: 0,
+            totalUsers: 0,
+            totalProducts: 0
+        };
     }
 }
 
-// Settings Functions
-async function getSettings() {
-    try {
-        const { data, error } = await supabase
-            .from('admin_settings')
-            .select('*');
-        
-        if (error) throw error;
-        
-        // Convert array to object
-        const settings = {};
-        data.forEach(setting => {
-            settings[setting.setting_key] = setting.setting_value;
-        });
-        
-        return settings;
-    } catch (error) {
-        console.error('Get settings error:', error);
-        throw error;
-    }
-}
-
-async function updateSetting(key, value) {
-    try {
-        const { data, error } = await supabase
-            .from('admin_settings')
-            .upsert([{
-                setting_key: key,
-                setting_value: value,
-                updated_at: new Date().toISOString()
-            }])
-            .select()
-            .single();
-        
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Update setting error:', error);
-        throw error;
-    }
-}
-
-// Initialize Supabase when script loads
-if (typeof window !== 'undefined') {
-    loadSupabase();
-}
+// Export global functions
+window.supabaseClient = {
+    createFirstAdmin,
+    checkAdminExists,
+    loginAdmin,
+    getDashboardStats,
+    isReady: () => isSupabaseReady,
+    getClient: () => supabase
+};
