@@ -2,7 +2,7 @@
 
 // Supabase project configuration
 const SUPABASE_URL = 'https://nmrbzdwhzbkbpmizxqvo.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // You need to get this from your Supabase dashboard
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tcmJ6ZHdoemJrYnBtaXp4cXZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODYzOTYsImV4cCI6MjA3MzU2MjM5Nn0.ojLDOWCOR0nFxn8jl9SIr4gS4xOmhPQGM7QIEtez1Wk'; // You need to get this from your Supabase dashboard
 
 // Initialize Supabase client
 let supabase;
