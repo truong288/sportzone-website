@@ -28,7 +28,7 @@ async function initializeAdmin() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-            window.location.href = 'index.html';
+            window.location.href = 'admin-login.html';
             return;
         }
         
@@ -41,7 +41,7 @@ async function initializeAdmin() {
         
         if (error || !profile || profile.role !== 'admin') {
             alert('Không có quyền truy cập trang admin!');
-            window.location.href = 'index.html';
+            window.location.href = 'admin-login.html';
             return;
         }
         
@@ -56,7 +56,7 @@ async function initializeAdmin() {
     } catch (error) {
         console.error('Admin initialization error:', error);
         alert('Lỗi khởi tạo trang admin!');
-        window.location.href = 'index.html';
+        window.location.href = 'admin-login.html';
     }
 }
 
@@ -865,7 +865,7 @@ async function logout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
         try {
             await logoutUser();
-            window.location.href = 'index.html';
+            window.location.href = 'admin-login.html';
         } catch (error) {
             console.error('Logout error:', error);
             showError('Lỗi đăng xuất');
