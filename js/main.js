@@ -566,6 +566,35 @@ function debounce(func, wait) {
 }
 
 // Export functions for global use
+// Navigate to checkout page
+function goToCheckout() {
+    if (state.cart.length === 0) {
+        alert('Giỏ hàng của bạn đang trống!');
+        return;
+    }
+    
+    // Save cart to localStorage for checkout page
+    const cartForCheckout = state.cart.map(item => {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) return null;
+        
+        const price = product.onSale ? product.salePrice : product.originalPrice;
+        return {
+            id: product.id,
+            name: getProductName(product),
+            price: price,
+            quantity: item.quantity,
+            image: product.images[0],
+            size: item.size || null
+        };
+    }).filter(item => item !== null);
+    
+    localStorage.setItem('sportzone_cart', JSON.stringify(cartForCheckout));
+    
+    // Navigate to checkout
+    window.location.href = 'checkout.html';
+}
+
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.updateCartQuantity = updateCartQuantity;
@@ -578,3 +607,4 @@ window.showRegister = showRegister;
 window.closeModal = closeModal;
 window.logout = logout;
 window.filterByCategory = filterByCategory;
+window.goToCheckout = goToCheckout;
