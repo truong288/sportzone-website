@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Flow Debugger - SportZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; padding: 2rem; }
+        .debug-container { max-width: 900px; margin: 0 auto; }
+        .log-output { 
+            background: #1e1e1e; 
+            color: #00ff00; 
+            padding: 1rem; 
+            border-radius: 8px; 
+            font-family: 'Courier New', monospace; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            margin: 1rem 0; 
+        }
+        .status-good { color: #28a745; }
+        .status-bad { color: #dc3545; }
+        .status-info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1><i class="fas fa-bug"></i> Auth Flow Debugger</h1>
+        <p class="text-muted">Debug toàn bộ quá trình authentication</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🔐 Authentication Tests</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary btn-sm mb-2" onclick="checkLocalStorage()">Check LocalStorage</button><br>
+                        <button class="btn btn-primary btn-sm mb-2" onclick="loginTest()">Test Login</button><br>
+                        <button class="btn btn-primary btn-sm mb-2" onclick="testAdminRedirect()">Test Admin Redirect</button><br>
+                        <button class="btn btn-warning btn-sm mb-2" onclick="clearSession()">Clear Session</button><br>
+                        <button class="btn btn-info btn-sm mb-2" onclick="createFakeSession()">Create Fake Session</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🔗 Navigation Tests</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="admin-login.html" class="btn btn-outline-primary btn-sm mb-2">Go to Login</a><br>
+                        <a href="admin.html" class="btn btn-outline-primary btn-sm mb-2">Go to Admin</a><br>
+                        <a href="admin-simple.html" class="btn btn-outline-success btn-sm mb-2">Go to Simple Admin</a><br>
+                        <button class="btn btn-outline-info btn-sm mb-2" onclick="testAllPages()">Test All Pages</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>📋 Debug Log</h5>
+                <button class="btn btn-sm btn-secondary float-end" onclick="clearLog()">Clear</button>
+            </div>
+            <div class="card-body">
+                <div class="log-output" id="debugLog">
+                    <div>[DEBUG] Auth Flow Debugger started...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>📊 Current Status</h5>
+            </div>
+            <div class="card-body">
+                <div id="statusDisplay">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/supabase.js"></script>
+    
+    <script>
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const logOutput = document.getElementById('debugLog');
+            const color = type === 'error' ? '#ff4444' : type === 'success' ? '#44ff44' : '#00ff00';
+            logOutput.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = '<div>[DEBUG] Log cleared</div>';
+        }
+        
+        function updateStatus() {
+            const statusDiv = document.getElementById('statusDisplay');
+            const currentAdmin = localStorage.getItem('currentAdmin');
+            
+            let html = '<div class="row">';
+            
+            // localStorage check
+            if (currentAdmin) {
+                try {
+                    const admin = JSON.parse(currentAdmin);
+                    html += `<div class="col-md-6"><span class="status-good">✅ Session: Valid</span><br><small>Email: ${admin.email}</small></div>`;
+                } catch (e) {
+                    html += '<div class="col-md-6"><span class="status-bad">❌ Session: Invalid JSON</span></div>';
+                }
+            } else {
+                html += '<div class="col-md-6"><span class="status-bad">❌ Session: Not found</span></div>';
+            }
+            
+            // Supabase check
+            if (window.supabaseClient) {
+                html += '<div class="col-md-6"><span class="status-good">✅ Supabase: Connected</span></div>';
+            } else {
+                html += '<div class="col-md-6"><span class="status-bad">❌ Supabase: Not ready</span></div>';
+            }
+            
+            html += '</div>';
+            statusDiv.innerHTML = html;
+        }
+        
+        function checkLocalStorage() {
+            log('🔍 Checking localStorage...');
+            
+            const currentAdmin = localStorage.getItem('currentAdmin');
+            if (currentAdmin) {
+                try {
+                    const admin = JSON.parse(currentAdmin);
+                    log(`✅ Session found: ${admin.email}`, 'success');
+                    log(`📅 Created: ${admin.created_at || 'Unknown'}`);
+                    log(`🎭 Role: ${admin.role || 'Unknown'}`);
+                } catch (error) {
+                    log(`❌ Invalid session data: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ No session found in localStorage', 'error');
+            }
+            
+            updateStatus();
+        }
+        
+        async function loginTest() {
+            log('🔑 Testing login process...');
+            
+            if (!window.supabaseClient) {
+                log('❌ Supabase client not available', 'error');
+                return;
+            }
+            
+            try {
+                const adminData = await window.supabaseClient.loginAdmin('admin@sportzone.com');
+                log(`✅ Login successful: ${adminData.email}`, 'success');
+                
+                // Store session
+                localStorage.setItem('currentAdmin', JSON.stringify(adminData));
+                log('💾 Session stored in localStorage', 'success');
+                
+                updateStatus();
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function testAdminRedirect() {
+            log('🔄 Testing admin page redirect...');
+            
+            const currentAdmin = localStorage.getItem('currentAdmin');
+            if (currentAdmin) {
+                log('✅ Session exists, should access admin page', 'success');
+                setTimeout(() => {
+                    window.location.href = 'admin-simple.html';
+                }, 1000);
+            } else {
+                log('❌ No session, should redirect to login', 'error');
+                setTimeout(() => {
+                    window.location.href = 'admin-login.html';
+                }, 1000);
+            }
+        }
+        
+        function clearSession() {
+            log('🗑️ Clearing session...');
+            localStorage.removeItem('currentAdmin');
+            log('✅ Session cleared', 'success');
+            updateStatus();
+        }
+        
+        function createFakeSession() {
+            log('🎭 Creating fake session for testing...');
+            
+            const fakeAdmin = {
+                id: 'fake-id',
+                email: 'admin@sportzone.com',
+                full_name: 'Test Admin',
+                role: 'super_admin',
+                is_active: true,
+                created_at: new Date().toISOString()
+            };
+            
+            localStorage.setItem('currentAdmin', JSON.stringify(fakeAdmin));
+            log('✅ Fake session created', 'success');
+            updateStatus();
+        }
+        
+        async function testAllPages() {
+            log('🌐 Testing all page access...');
+            
+            const pages = [
+                { name: 'Login', url: 'admin-login.html' },
+                { name: 'Admin', url: 'admin.html' },
+                { name: 'Simple Admin', url: 'admin-simple.html' }
+            ];
+            
+            for (const page of pages) {
+                try {
+                    const response = await fetch(page.url);
+                    if (response.ok) {
+                        log(`✅ ${page.name}: Accessible (${response.status})`, 'success');
+                    } else {
+                        log(`❌ ${page.name}: Error ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${page.name}: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Debug tool initialized');
+            updateStatus();
+            checkLocalStorage();
+        });
+    </script>
+</body>
+</html>
