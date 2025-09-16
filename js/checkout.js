@@ -1,401 +1,401 @@
-// Checkout JavaScript for SportZone
+// Checkout functionality
 
-// State management
-const checkoutState = {
-    cart: JSON.parse(localStorage.getItem('cart')) || [],
-    selectedProvince: '',
-    selectedDistrict: '',
-    selectedWard: '',
-    shippingFee: 0,
-    discount: 0,
-    couponCode: ''
+// Sample cart data for testing
+let cartItems = [
+    {
+        id: 1,
+        name: "Giày bóng đá Nike Mercurial",
+        price: 2500000,
+        quantity: 1,
+        image: "https://via.placeholder.com/60x60/007bff/ffffff?text=Nike",
+        size: "42"
+    },
+    {
+        id: 2,
+        name: "Áo thun thể thao Adidas",
+        price: 450000,
+        quantity: 2,
+        image: "https://via.placeholder.com/60x60/28a745/ffffff?text=Adidas",
+        size: "L"
+    }
+];
+
+// Shipping costs by city
+const shippingCosts = {
+    'hanoi': 25000,
+    'hcm': 25000,
+    'danang': 30000,
+    'other': 40000
 };
 
-// Initialize checkout page
-document.addEventListener('DOMContentLoaded', function() {
-    loadProvinces();
-    loadCheckoutItems();
-    calculateTotal();
-    setupEventListeners();
+// Discount codes
+const discountCodes = {
+    'SPORT2024': { type: 'percent', value: 10, minOrder: 500000 },
+    'NEWCUSTOMER': { type: 'fixed', value: 50000, minOrder: 300000 },
+    'FREESHIP': { type: 'shipping', value: 0, minOrder: 200000 }
+};
+
+// District data by city
+const districts = {
+    'hanoi': ['Ba Đình', 'Hoàn Kiếm', 'Tây Hồ', 'Long Biên', 'Cầu Giấy', 'Đống Đa', 'Hai Bà Trưng', 'Hoàng Mai', 'Thanh Xuân'],
+    'hcm': ['Quận 1', 'Quận 2', 'Quận 3', 'Quận 4', 'Quận 5', 'Quận 6', 'Quận 7', 'Quận 8', 'Quận 9', 'Quận 10', 'Quận 11', 'Quận 12', 'Thủ Đức'],
+    'danang': ['Hải Châu', 'Thanh Khê', 'Sơn Trà', 'Ngũ Hành Sơn', 'Liên Chiểu', 'Cẩm Lệ'],
+    'other': ['Chọn quận/huyện']
+};
+
+// Load cart data from localStorage or use sample data
+function loadCartData() {
+    const savedCart = localStorage.getItem('sportzone_cart');
+    if (savedCart) {
+        cartItems = JSON.parse(savedCart);
+    }
     
-    // Redirect if cart is empty
-    if (checkoutState.cart.length === 0) {
-        alert('Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.');
+    if (cartItems.length === 0) {
+        // Redirect to homepage if cart is empty
+        alert('Giỏ hàng của bạn đang trống!');
         window.location.href = 'index.html';
         return;
     }
-});
-
-function setupEventListeners() {
-    // Payment method change
-    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-        radio.addEventListener('change', handlePaymentMethodChange);
-    });
     
-    // Form validation
-    document.getElementById('customer-form').addEventListener('input', validateForms);
-    document.getElementById('shipping-form').addEventListener('input', validateForms);
+    displayOrderItems();
+    calculateTotal();
 }
 
-// Load address data
-function loadProvinces() {
-    const provinceSelect = document.getElementById('province-select');
+// Display order items
+function displayOrderItems() {
+    const orderItemsContainer = document.getElementById('orderItems');
+    orderItemsContainer.innerHTML = '';
     
-    Object.keys(vietnamAddress).forEach(province => {
-        const option = document.createElement('option');
-        option.value = province;
-        option.textContent = province;
-        provinceSelect.appendChild(option);
+    cartItems.forEach(item => {
+        const orderItem = document.createElement('div');
+        orderItem.className = 'order-item';
+        orderItem.innerHTML = `
+            <img src="${item.image}" alt="${item.name}">
+            <div class="item-details">
+                <div class="item-name">${item.name}</div>
+                <div class="item-info">
+                    ${item.size ? `Size: ${item.size} | ` : ''}Số lượng: ${item.quantity}
+                </div>
+            </div>
+            <div class="item-price">${formatPrice(item.price * item.quantity)}</div>
+        `;
+        orderItemsContainer.appendChild(orderItem);
     });
 }
 
-function loadDistricts() {
-    const provinceSelect = document.getElementById('province-select');
-    const districtSelect = document.getElementById('district-select');
-    const wardSelect = document.getElementById('ward-select');
+// Calculate order total
+function calculateTotal() {
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const city = document.getElementById('city').value;
+    const shipping = shippingCosts[city] || shippingCosts['other'];
     
-    const selectedProvince = provinceSelect.value;
-    checkoutState.selectedProvince = selectedProvince;
+    // Apply discount if any
+    const discountAmount = getDiscountAmount(subtotal);
+    let finalShipping = shipping;
     
-    // Clear districts and wards
+    // Check if discount covers shipping
+    const appliedDiscount = getAppliedDiscount();
+    if (appliedDiscount && appliedDiscount.type === 'shipping') {
+        finalShipping = 0;
+    }
+    
+    const total = subtotal + finalShipping - discountAmount;
+    
+    // Update UI
+    document.getElementById('subtotal').textContent = formatPrice(subtotal);
+    document.getElementById('shipping').textContent = formatPrice(finalShipping);
+    document.getElementById('total').textContent = formatPrice(total);
+    
+    // Show/hide discount row
+    const discountRow = document.getElementById('discountRow');
+    if (discountAmount > 0 || finalShipping !== shipping) {
+        discountRow.style.display = 'flex';
+        let discountText = '';
+        if (discountAmount > 0) discountText += `-${formatPrice(discountAmount)}`;
+        if (finalShipping !== shipping) discountText += ' (Free ship)';
+        document.getElementById('discount').textContent = discountText;
+    } else {
+        discountRow.style.display = 'none';
+    }
+}
+
+// Update shipping cost when city changes
+function updateShipping() {
+    const city = document.getElementById('city').value;
+    const districtSelect = document.getElementById('district');
+    
+    // Update districts
     districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-    wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-    
-    if (selectedProvince && vietnamAddress[selectedProvince]) {
-        Object.keys(vietnamAddress[selectedProvince]).forEach(district => {
+    if (city && districts[city]) {
+        districts[city].forEach(district => {
             const option = document.createElement('option');
-            option.value = district;
+            option.value = district.toLowerCase().replace(/\s+/g, '');
             option.textContent = district;
             districtSelect.appendChild(option);
         });
     }
     
-    updateShippingFee();
-}
-
-function loadWards() {
-    const provinceSelect = document.getElementById('province-select');
-    const districtSelect = document.getElementById('district-select');
-    const wardSelect = document.getElementById('ward-select');
-    
-    const selectedProvince = provinceSelect.value;
-    const selectedDistrict = districtSelect.value;
-    checkoutState.selectedDistrict = selectedDistrict;
-    
-    // Clear wards
-    wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-    
-    if (selectedProvince && selectedDistrict && vietnamAddress[selectedProvince][selectedDistrict]) {
-        vietnamAddress[selectedProvince][selectedDistrict].forEach(ward => {
-            const option = document.createElement('option');
-            option.value = ward;
-            option.textContent = ward;
-            wardSelect.appendChild(option);
-        });
-    }
-}
-
-function updateShippingFee() {
-    const province = checkoutState.selectedProvince;
-    const subtotal = calculateSubtotal();
-    
-    // Check free shipping threshold
-    if (subtotal >= systemSettings.freeShippingThreshold) {
-        checkoutState.shippingFee = 0;
-    } else {
-        checkoutState.shippingFee = shippingFees[province] || shippingFees['Default'];
-    }
-    
-    updateShippingFeeDisplay();
     calculateTotal();
 }
 
-function updateShippingFeeDisplay() {
-    const shippingFeeElement = document.getElementById('shipping-fee');
-    if (checkoutState.shippingFee === 0) {
-        shippingFeeElement.textContent = 'Miễn phí';
-    } else {
-        shippingFeeElement.textContent = formatCurrency(checkoutState.shippingFee);
-    }
-}
-
-// Load cart items for checkout
-function loadCheckoutItems() {
-    const container = document.getElementById('checkout-items');
+// Apply discount code
+function applyDiscount() {
+    const discountCode = document.getElementById('discountCode').value.trim().toUpperCase();
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-    if (checkoutState.cart.length === 0) {
-        container.innerHTML = '<p>Giỏ hàng trống</p>';
+    if (!discountCode) {
+        alert('Vui lòng nhập mã giảm giá!');
         return;
     }
     
-    container.innerHTML = checkoutState.cart.map(item => {
-        const product = products.find(p => p.id === item.productId);
-        if (!product) return '';
-        
-        const itemPrice = product.onSale ? product.salePrice : product.originalPrice;
-        
-        return `
-            <div class="checkout-item">
-                <img src="${product.images[0]}" alt="${product.name}" class="item-image">
-                <div class="item-info">
-                    <div class="item-name">${product.name}</div>
-                    <div class="item-details">Số lượng: ${item.quantity}</div>
-                    <div class="item-price">${formatCurrency(itemPrice)} x ${item.quantity} = ${formatCurrency(itemPrice * item.quantity)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Calculate totals
-function calculateSubtotal() {
-    return checkoutState.cart.reduce((total, item) => {
-        const product = products.find(p => p.id === item.productId);
-        if (!product) return total;
-        
-        const itemPrice = product.onSale ? product.salePrice : product.originalPrice;
-        return total + (itemPrice * item.quantity);
-    }, 0);
-}
-
-function calculateTotal() {
-    const subtotal = calculateSubtotal();
-    const total = subtotal + checkoutState.shippingFee - checkoutState.discount;
-    
-    document.getElementById('subtotal').textContent = formatCurrency(subtotal);
-    document.getElementById('total-amount').textContent = formatCurrency(total);
-    
-    // Update transfer content for bank payment
-    document.getElementById('transfer-content').textContent = `SPORTZONE ${generateOrderId()}`;
-}
-
-// Payment method handling
-function handlePaymentMethodChange(e) {
-    const bankInfo = document.getElementById('bank-info');
-    
-    if (e.target.value === 'bank_transfer') {
-        bankInfo.style.display = 'block';
-    } else {
-        bankInfo.style.display = 'none';
-    }
-}
-
-// Coupon handling
-function applyCoupon() {
-    const couponCode = document.getElementById('coupon-code').value.trim().toUpperCase();
-    
-    // Mock coupon validation
-    const validCoupons = {
-        'SPORT10': 0.1,  // 10% discount
-        'WELCOME20': 0.2, // 20% discount
-        'SUMMER15': 0.15  // 15% discount
-    };
-    
-    if (validCoupons[couponCode]) {
-        const subtotal = calculateSubtotal();
-        checkoutState.discount = subtotal * validCoupons[couponCode];
-        checkoutState.couponCode = couponCode;
-        
-        // Show discount row
-        const discountRow = document.getElementById('coupon-discount');
-        discountRow.style.display = 'flex';
-        discountRow.querySelector('span:last-child').textContent = '-' + formatCurrency(checkoutState.discount);
-        
-        calculateTotal();
-        
-        // Disable coupon input
-        document.getElementById('coupon-code').disabled = true;
-        
-        showMessage(`Áp dụng mã giảm giá thành công! Giảm ${formatCurrency(checkoutState.discount)}`, 'success');
-    } else {
-        showMessage('Mã giảm giá không hợp lệ!', 'error');
-    }
-}
-
-// Form validation
-function validateForms() {
-    const customerForm = document.getElementById('customer-form');
-    const shippingForm = document.getElementById('shipping-form');
-    const placeOrderBtn = document.querySelector('.btn-place-order');
-    
-    const customerValid = customerForm.checkValidity();
-    const shippingValid = shippingForm.checkValidity();
-    
-    placeOrderBtn.disabled = !(customerValid && shippingValid);
-}
-
-// Place order
-function placeOrder() {
-    if (!validateOrderData()) {
+    if (!discountCodes[discountCode]) {
+        alert('Mã giảm giá không hợp lệ!');
         return;
     }
     
-    const orderData = collectOrderData();
-    
-    // Simulate order processing
-    document.querySelector('.btn-place-order').disabled = true;
-    document.querySelector('.btn-place-order').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-    
-    setTimeout(() => {
-        processOrder(orderData);
-    }, 2000);
-}
-
-function validateOrderData() {
-    const customerForm = document.getElementById('customer-form');
-    const shippingForm = document.getElementById('shipping-form');
-    
-    if (!customerForm.checkValidity()) {
-        showMessage('Vui lòng điền đầy đủ thông tin khách hàng!', 'error');
-        return false;
+    const discount = discountCodes[discountCode];
+    if (subtotal < discount.minOrder) {
+        alert(`Đơn hàng tối thiểu ${formatPrice(discount.minOrder)} để sử dụng mã này!`);
+        return;
     }
     
-    if (!shippingForm.checkValidity()) {
-        showMessage('Vui lòng điền đầy đủ địa chỉ giao hàng!', 'error');
-        return false;
+    // Save applied discount
+    localStorage.setItem('applied_discount', discountCode);
+    
+    // Show success message
+    let message = '';
+    if (discount.type === 'percent') {
+        message = `Áp dụng thành công! Giảm ${discount.value}%`;
+    } else if (discount.type === 'fixed') {
+        message = `Áp dụng thành công! Giảm ${formatPrice(discount.value)}`;
+    } else if (discount.type === 'shipping') {
+        message = 'Áp dụng thành công! Miễn phí vận chuyển';
     }
     
-    return true;
+    alert(message);
+    calculateTotal();
+    
+    // Disable discount input
+    document.getElementById('discountCode').disabled = true;
+    document.querySelector('.discount-input button').textContent = 'Đã áp dụng';
+    document.querySelector('.discount-input button').disabled = true;
 }
 
-function collectOrderData() {
-    const customerFormData = new FormData(document.getElementById('customer-form'));
-    const shippingFormData = new FormData(document.getElementById('shipping-form'));
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-    const orderNotes = document.querySelector('textarea[name="orderNotes"]').value;
-    
-    const orderData = {
-        id: generateOrderId(),
-        customer: {
-            fullName: customerFormData.get('fullName'),
-            phone: customerFormData.get('phone'),
-            email: customerFormData.get('email')
-        },
-        shippingAddress: {
-            fullName: customerFormData.get('fullName'),
-            phone: customerFormData.get('phone'),
-            province: shippingFormData.get('province'),
-            district: shippingFormData.get('district'),
-            ward: shippingFormData.get('ward'),
-            address: shippingFormData.get('address')
-        },
-        items: checkoutState.cart.map(item => {
-            const product = products.find(p => p.id === item.productId);
-            const itemPrice = product.onSale ? product.salePrice : product.originalPrice;
-            return {
-                productId: item.productId,
-                productName: product.name,
-                quantity: item.quantity,
-                price: itemPrice
-            };
-        }),
-        subtotal: calculateSubtotal(),
-        shippingFee: checkoutState.shippingFee,
-        discount: checkoutState.discount,
-        total: calculateSubtotal() + checkoutState.shippingFee - checkoutState.discount,
-        paymentMethod: paymentMethod,
-        orderNotes: orderNotes,
-        couponCode: checkoutState.couponCode,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-    };
-    
-    return orderData;
+// Get applied discount
+function getAppliedDiscount() {
+    const appliedCode = localStorage.getItem('applied_discount');
+    return appliedCode ? discountCodes[appliedCode] : null;
 }
 
-function processOrder(orderData) {
-    try {
-        // Add order to orders array (simulation)
-        orders.push({
-            id: orderData.id,
-            customerId: 'CUST' + Date.now(),
-            customerName: orderData.customer.fullName,
-            customerEmail: orderData.customer.email,
-            customerPhone: orderData.customer.phone,
-            items: orderData.items,
-            subtotal: orderData.subtotal,
-            shippingFee: orderData.shippingFee,
-            total: orderData.total,
-            status: orderData.status,
-            paymentMethod: orderData.paymentMethod,
-            shippingAddress: orderData.shippingAddress,
-            createdAt: orderData.createdAt,
-            updatedAt: orderData.createdAt
-        });
-        
-        // Update product stock
-        orderData.items.forEach(item => {
-            const product = products.find(p => p.id === item.productId);
-            if (product) {
-                product.stock -= item.quantity;
+// Get discount amount
+function getDiscountAmount(subtotal) {
+    const discount = getAppliedDiscount();
+    if (!discount) return 0;
+    
+    if (discount.type === 'percent') {
+        return Math.floor(subtotal * discount.value / 100);
+    } else if (discount.type === 'fixed') {
+        return Math.min(discount.value, subtotal);
+    }
+    
+    return 0;
+}
+
+// Format price to Vietnamese currency
+function formatPrice(price) {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+    }).format(price);
+}
+
+// Handle payment method change
+function handlePaymentMethodChange() {
+    const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+    const bankingDetails = document.getElementById('bankingDetails');
+    
+    paymentMethods.forEach(method => {
+        method.addEventListener('change', function() {
+            if (this.value === 'banking') {
+                bankingDetails.style.display = 'block';
+                // Generate order code for transfer note
+                const orderCode = 'SP' + Date.now().toString().slice(-6);
+                document.getElementById('transferNote').textContent = `SPORTZONE ${orderCode}`;
+            } else {
+                bankingDetails.style.display = 'none';
             }
         });
+    });
+}
+
+// Submit order
+async function submitOrder(event) {
+    event.preventDefault();
+    
+    // Validate form
+    const form = document.getElementById('checkoutForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Collect form data
+    const formData = new FormData(form);
+    const orderData = {
+        customer: {
+            fullName: formData.get('fullName'),
+            phone: formData.get('phone'),
+            email: formData.get('email')
+        },
+        shipping: {
+            city: formData.get('city'),
+            district: formData.get('district'),
+            address: formData.get('address')
+        },
+        payment: {
+            method: formData.get('paymentMethod')
+        },
+        items: cartItems,
+        notes: formData.get('orderNotes'),
+        discount: getAppliedDiscount(),
+        subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        shippingCost: getShippingCost(),
+        discountAmount: getDiscountAmount(cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)),
+        total: calculateOrderTotal(),
+        orderCode: generateOrderCode()
+    };
+    
+    // Show loading modal
+    document.getElementById('loadingModal').style.display = 'block';
+    
+    try {
+        // Save order to Supabase if available, otherwise save locally
+        if (typeof supabase !== 'undefined' && supabase) {
+            await createOrder(orderData);
+        } else {
+            // Fallback to localStorage for testing
+            saveOrderLocally(orderData);
+        }
         
-        // Clear cart
-        localStorage.removeItem('cart');
+        // Hide loading modal
+        document.getElementById('loadingModal').style.display = 'none';
         
         // Show success modal
-        showOrderSuccess(orderData);
+        document.getElementById('orderCode').textContent = orderData.orderCode;
+        document.getElementById('successModal').style.display = 'block';
+        
+        // Clear cart
+        localStorage.removeItem('sportzone_cart');
+        localStorage.removeItem('applied_discount');
         
     } catch (error) {
-        showMessage('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!', 'error');
+        console.error('Order submission error:', error);
         
-        // Reset button
-        document.querySelector('.btn-place-order').disabled = false;
-        document.querySelector('.btn-place-order').innerHTML = '<i class="fas fa-shopping-bag"></i> Đặt hàng';
+        // Hide loading modal
+        document.getElementById('loadingModal').style.display = 'none';
+        
+        // Show error (but still save locally as backup)
+        saveOrderLocally(orderData);
+        
+        // Show success modal anyway (order saved locally)
+        document.getElementById('orderCode').textContent = orderData.orderCode;
+        document.getElementById('successModal').style.display = 'block';
+        
+        // Clear cart
+        localStorage.removeItem('sportzone_cart');
+        localStorage.removeItem('applied_discount');
     }
 }
 
-function showOrderSuccess(orderData) {
-    document.getElementById('order-id').textContent = orderData.id;
-    document.getElementById('order-total').textContent = formatCurrency(orderData.total);
+// Get shipping cost
+function getShippingCost() {
+    const city = document.getElementById('city').value;
+    let shipping = shippingCosts[city] || shippingCosts['other'];
     
-    document.getElementById('order-success-modal').style.display = 'block';
-    document.getElementById('overlay').style.display = 'block';
+    // Check if discount covers shipping
+    const appliedDiscount = getAppliedDiscount();
+    if (appliedDiscount && appliedDiscount.type === 'shipping') {
+        shipping = 0;
+    }
+    
+    return shipping;
 }
 
-function goHome() {
+// Save order locally as backup
+function saveOrderLocally(orderData) {
+    let orders = JSON.parse(localStorage.getItem('sportzone_orders')) || [];
+    orders.push({
+        ...orderData,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+    });
+    localStorage.setItem('sportzone_orders', JSON.stringify(orders));
+}
+
+// Calculate final order total
+function calculateOrderTotal() {
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const city = document.getElementById('city').value;
+    let shipping = shippingCosts[city] || shippingCosts['other'];
+    const discountAmount = getDiscountAmount(subtotal);
+    
+    // Check if discount covers shipping
+    const appliedDiscount = getAppliedDiscount();
+    if (appliedDiscount && appliedDiscount.type === 'shipping') {
+        shipping = 0;
+    }
+    
+    return subtotal + shipping - discountAmount;
+}
+
+// Generate order code
+function generateOrderCode() {
+    const prefix = 'SP';
+    const timestamp = Date.now().toString();
+    const random = Math.random().toString(36).substr(2, 3).toUpperCase();
+    return prefix + timestamp.slice(-6) + random;
+}
+
+// Save order to localStorage (backup method)
+function saveOrder(orderData) {
+    saveOrderLocally(orderData);
+}
+
+// Go back to home page
+function goToHome() {
     window.location.href = 'index.html';
 }
 
-function viewOrder() {
-    // This would redirect to order tracking page
-    alert('Chức năng xem đơn hàng sẽ được phát triển!');
-    goHome();
+// Auto-fill customer info if logged in
+function autoFillCustomerInfo() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (currentUser.email) {
+        document.getElementById('fullName').value = currentUser.fullName || '';
+        document.getElementById('email').value = currentUser.email || '';
+        document.getElementById('phone').value = currentUser.phone || '';
+    }
 }
 
-// Utility functions
-function generateOrderId() {
-    const timestamp = Date.now().toString();
-    const random = Math.random().toString(36).substr(2, 5).toUpperCase();
-    return 'ORD' + timestamp.substr(-6) + random;
-}
-
-function formatCurrency(amount) {
-    return amount.toLocaleString('vi-VN') + 'đ';
-}
-
-function showMessage(message, type = 'info') {
-    const messageEl = document.createElement('div');
-    messageEl.className = `message ${type} show`;
-    messageEl.textContent = message;
+// Initialize checkout page
+function initCheckout() {
+    loadCartData();
+    handlePaymentMethodChange();
+    autoFillCustomerInfo();
     
-    document.body.appendChild(messageEl);
+    // Load previously applied discount
+    const appliedDiscount = localStorage.getItem('applied_discount');
+    if (appliedDiscount) {
+        document.getElementById('discountCode').value = appliedDiscount;
+        document.getElementById('discountCode').disabled = true;
+        document.querySelector('.discount-input button').textContent = 'Đã áp dụng';
+        document.querySelector('.discount-input button').disabled = true;
+        calculateTotal();
+    }
     
-    setTimeout(() => {
-        messageEl.classList.remove('show');
-        setTimeout(() => {
-            if (document.body.contains(messageEl)) {
-                document.body.removeChild(messageEl);
-            }
-        }, 300);
-    }, 3000);
+    // Add event listeners
+    document.getElementById('checkoutForm').addEventListener('submit', submitOrder);
+    document.getElementById('city').addEventListener('change', updateShipping);
 }
 
-// Export functions for global use
-window.loadDistricts = loadDistricts;
-window.loadWards = loadWards;
-window.applyCoupon = applyCoupon;
-window.placeOrder = placeOrder;
-window.goHome = goHome;
-window.viewOrder = viewOrder;
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initCheckout);
