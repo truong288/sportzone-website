@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Database Connection - SportZone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background: #f8f9fa; 
+            padding: 2rem; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .log-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 1rem 0;
+        }
+        .btn-test {
+            background: #007bff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            margin: 5px;
+        }
+        .btn-test:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-weight: 600;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1><i class="fas fa-database"></i> Test Database Connection</h1>
+        <p class="text-muted">Kiểm tra kết nối và cấu hình Supabase</p>
+        
+        <div class="d-flex gap-2 mb-3">
+            <button class="btn-test" onclick="testConnection()">🔍 Test Connection</button>
+            <button class="btn-test" onclick="testTables()">📋 Check Tables</button>
+            <button class="btn-test" onclick="testRLS()">🔒 Test RLS</button>
+            <button class="btn-test" onclick="createTestAdmin()">👤 Create Test Admin</button>
+            <button class="btn-test" onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+        
+        <div id="status"></div>
+        <div class="log-output" id="logOutput">
+            <div>🔄 Initializing test page...</div>
+            <div>⏳ Loading Supabase client...</div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuration
+        const SUPABASE_URL = 'https://nmrbzdwhzbkbpmizxqvo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tcmJ6ZHdoemJrYnBtaXp4cXZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5ODYzOTYsImV4cCI6MjA3MzU2MjM5Nn0.ojLDOWCOR0nFxn8jl9SIr4gS4xOmhPQGM7QIEtez1Wk';
+        
+        let supabase;
+        let logOutput = document.getElementById('logOutput');
+        let statusDiv = document.getElementById('status');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                log('✅ Supabase client created successfully');
+                showStatus('Supabase client initialized', 'success');
+                
+                // Auto test connection
+                setTimeout(() => testConnection(), 1000);
+                
+            } catch (error) {
+                log('❌ Failed to create Supabase client: ' + error.message);
+                showStatus('Initialization failed', 'error');
+            }
+        });
+        
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            logOutput.innerHTML += `<div>[${time}] ${message}</div>`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+        
+        function showStatus(message, type) {
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function clearLog() {
+            logOutput.innerHTML = '<div>🗑️ Log cleared</div>';
+        }
+        
+        async function testConnection() {
+            try {
+                log('🔍 Testing basic connection...');
+                
+                // Test 1: Simple query
+                const { data, error } = await supabase
+                    .from('admins')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    log('❌ Connection failed: ' + error.message);
+                    showStatus('Connection failed: ' + error.message, 'error');
+                } else {
+                    log('✅ Connection successful! Admin count: ' + (data || 0));
+                    showStatus('Database connection working', 'success');
+                }
+                
+            } catch (error) {
+                log('❌ Connection test failed: ' + error.message);
+                showStatus('Connection test failed', 'error');
+            }
+        }
+        
+        async function testTables() {
+            log('📋 Checking tables...');
+            
+            const tables = ['admins', 'users', 'products', 'categories', 'orders'];
+            
+            for (const table of tables) {
+                try {
+                    const { count, error } = await supabase
+                        .from(table)
+                        .select('*', { count: 'exact', head: true });
+                    
+                    if (error) {
+                        log(`❌ Table '${table}': ${error.message}`);
+                    } else {
+                        log(`✅ Table '${table}': ${count || 0} rows`);
+                    }
+                } catch (err) {
+                    log(`❌ Table '${table}': ${err.message}`);
+                }
+            }
+            
+            showStatus('Table check completed', 'info');
+        }
+        
+        async function testRLS() {
+            log('🔒 Testing Row Level Security...');
+            
+            try {
+                // Test insert to admins (should work if RLS is disabled)
+                const testData = {
+                    email: `test_${Date.now()}@test.com`,
+                    full_name: 'Test Admin',
+                    role: 'admin',
+                    is_active: true
+                };
+                
+                const { data, error } = await supabase
+                    .from('admins')
+                    .insert([testData])
+                    .select()
+                    .single();
+                
+                if (error) {
+                    log('❌ RLS test failed: ' + error.message);
+                    if (error.message.includes('recursion')) {
+                        log('⚠️ RLS recursion detected! Run disable_rls_emergency.sql');
+                        showStatus('RLS recursion detected - run SQL fix', 'error');
+                    }
+                } else {
+                    log('✅ RLS test passed - insert successful');
+                    
+                    // Clean up test data
+                    await supabase.from('admins').delete().eq('id', data.id);
+                    log('🗑️ Test data cleaned up');
+                    
+                    showStatus('RLS is properly configured', 'success');
+                }
+                
+            } catch (error) {
+                log('❌ RLS test error: ' + error.message);
+                showStatus('RLS test failed', 'error');
+            }
+        }
+        
+        async function createTestAdmin() {
+            try {
+                log('👤 Creating test admin...');
+                
+                const adminData = {
+                    email: 'admin@sportzone.com',
+                    full_name: 'SportZone Admin',
+                    role: 'super_admin',
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                };
+                
+                // Check if admin exists
+                const { data: existing } = await supabase
+                    .from('admins')
+                    .select('email')
+                    .eq('email', adminData.email)
+                    .single();
+                
+                if (existing) {
+                    log('⚠️ Admin already exists with email: ' + adminData.email);
+                    showStatus('Admin already exists', 'info');
+                    return;
+                }
+                
+                // Create admin
+                const { data, error } = await supabase
+                    .from('admins')
+                    .insert([adminData])
+                    .select()
+                    .single();
+                
+                if (error) {
+                    log('❌ Failed to create admin: ' + error.message);
+                    showStatus('Admin creation failed', 'error');
+                } else {
+                    log('✅ Admin created successfully!');
+                    log(`📧 Email: ${data.email}`);
+                    log(`👤 Name: ${data.full_name}`);
+                    log(`🔑 Role: ${data.role}`);
+                    showStatus('Admin created successfully! You can now login.', 'success');
+                }
+                
+            } catch (error) {
+                log('❌ Create admin error: ' + error.message);
+                showStatus('Admin creation error', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
